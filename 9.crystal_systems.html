@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>7 Crystal Systems - Master Chemistry</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; }
+    body {
+      background: radial-gradient(circle at top, #1e1b4b 0%, #090d16 100%);
+      color: #f8fafc;
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+      user-select: none;
+    }
+    #canvas-container {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    .top-bar {
+      position: fixed;
+      top: 12px;
+      left: 12px;
+      right: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      pointer-events: none;
+      z-index: 10;
+    }
+    .title-box {
+      background: rgba(15, 23, 42, 0.78);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(129, 140, 248, 0.45);
+      padding: 8px 14px;
+      border-radius: 12px;
+      pointer-events: auto;
+    }
+    .title-box h1 {
+      font-size: 15px;
+      font-weight: 700;
+      color: #818cf8;
+      letter-spacing: 0.3px;
+    }
+    .title-box p {
+      font-size: 11px;
+      color: #cbd5e1;
+      margin-top: 2px;
+    }
+    .info-btn {
+      background: rgba(129, 140, 248, 0.2);
+      border: 1px solid #818cf8;
+      color: #e0e7ff;
+      padding: 8px 12px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      pointer-events: auto;
+    }
+    .param-card {
+      position: fixed;
+      top: 72px;
+      left: 12px;
+      background: rgba(15, 23, 42, 0.78);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(129, 140, 248, 0.35);
+      border-radius: 12px;
+      padding: 8px 12px;
+      font-size: 11.5px;
+      line-height: 1.55;
+      color: #e2e8f0;
+      z-index: 10;
+      pointer-events: none;
+      max-width: 220px;
+    }
+    .param-card strong { color: #a5b4fc; }
+    .param-card .sys-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: #38bdf8;
+      margin-bottom: 3px;
+    }
+    .info-panel {
+      position: fixed;
+      top: 72px;
+      right: 12px;
+      width: 280px;
+      max-width: calc(100vw - 24px);
+      background: rgba(15, 23, 42, 0.94);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(129, 140, 248, 0.45);
+      border-radius: 14px;
+      padding: 12px 14px;
+      z-index: 15;
+      display: none;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    }
+    .info-panel.show { display: block; }
+    .info-panel h2 {
+      font-size: 13px;
+      color: #818cf8;
+      margin-bottom: 8px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+      padding-bottom: 5px;
+    }
+    .info-panel ul {
+      list-style: none;
+      font-size: 11.5px;
+      line-height: 1.6;
+      color: #e2e8f0;
+    }
+    .info-panel li strong { color: #38bdf8; }
+    .controls {
+      position: fixed;
+      bottom: 42px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 6px;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      padding: 8px 10px;
+      border-radius: 14px;
+      z-index: 10;
+      flex-wrap: nowrap;
+      max-width: calc(100vw - 16px);
+      overflow-x: auto;
+    }
+    .btn {
+      background: #1e293b;
+      color: #e2e8f0;
+      border: 1px solid #334155;
+      padding: 7px 10px;
+      border-radius: 9px;
+      font-size: 11.5px;
+      font-weight: 600;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .btn.active {
+      background: #4f46e5;
+      border-color: #818cf8;
+      color: #ffffff;
+    }
+    .watermark {
+      position: fixed;
+      bottom: 10px;
+      right: 12px;
+      font-size: 11px;
+      font-weight: 600;
+      color: rgba(226, 232, 240, 0.75);
+      background: rgba(15, 23, 42, 0.65);
+      padding: 4px 10px;
+      border-radius: 8px;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      z-index: 10;
+      pointer-events: none;
+    }
+    .watermark span { color: #818cf8; }
+    .hint {
+      position: fixed;
+      bottom: 12px;
+      left: 12px;
+      font-size: 10px;
+      color: rgba(148, 163, 184, 0.8);
+      z-index: 10;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="top-bar">
+    <div class="title-box">
+      <h1>7 Crystal Systems</h1>
+      <p>12th HSC • Solid State (3D Model)</p>
+    </div>
+    <button class="info-btn" onclick="toggleInfo()">ℹ️ Notes</button>
+  </div>
+
+  <div class="param-card" id="paramCard">
+    <div class="sys-name" id="sysName">1. Cubic</div>
+    <div><strong>Edges:</strong> <span id="sysEdges">a = b = c</span></div>
+    <div><strong>Angles:</strong> <span id="sysAngles">α = β = γ = 90°</span></div>
+    <div><strong>Examples:</strong> <span id="sysEx">NaCl, Cu, Diamond</span></div>
+  </div>
+
+  <div class="info-panel" id="infoPanel">
+    <h2>📌 7 Crystal Systems (14 Bravais Lattices)</h2>
+    <ul>
+      <li>• <strong>Cubic:</strong> a=b=c, α=β=γ=90° (3 lattices)</li>
+      <li>• <strong>Tetragonal:</strong> a=b≠c, α=β=γ=90° (2 lattices)</li>
+      <li>• <strong>Orthorhombic:</strong> a≠b≠c, α=β=γ=90° (4 lattices)</li>
+      <li>• <strong>Hexagonal:</strong> a=b≠c, α=β=90°, γ=120° (1 lattice)</li>
+      <li>• <strong>Rhombohedral:</strong> a=b=c, α=β=γ≠90° (1 lattice)</li>
+      <li>• <strong>Monoclinic:</strong> a≠b≠c, α=γ=90°, β≠90° (2 lattices)</li>
+      <li>• <strong>Triclinic:</strong> a≠b≠c, α≠β≠γ≠90° (1 lattice)</li>
+    </ul>
+  </div>
+
+  <div id="canvas-container"></div>
+
+  <div class="controls">
+    <button class="btn active" onclick="selectSystem(0, this)">Cubic</button>
+    <button class="btn" onclick="selectSystem(1, this)">Tetragonal</button>
+    <button class="btn" onclick="selectSystem(2, this)">Orthorhombic</button>
+    <button class="btn" onclick="selectSystem(3, this)">Hexagonal</button>
+    <button class="btn" onclick="selectSystem(4, this)">Rhombohedral</button>
+    <button class="btn" onclick="selectSystem(5, this)">Monoclinic</button>
+    <button class="btn" onclick="selectSystem(6, this)">Triclinic</button>
+    <button class="btn active" id="btnRotate" onclick="toggleRotate()">Auto Rotate</button>
+  </div>
+
+  <div class="hint">👆 Drag to Rotate • Pinch to Zoom</div>
+  <div class="watermark">Created by <span>Kunal Ganeshakar</span> | Master Chemistry</div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+  <script>
+    const container = document.getElementById('canvas-container');
+    const scene = new THREE.Scene();
+
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.set(4.8, 3.6, 5.4);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    container.appendChild(renderer.domElement);
+
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.06;
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = 1.5;
+    controls.minDistance = 3;
+    controls.maxDistance = 12;
+
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+    scene.add(ambientLight);
+
+    const dirLight1 = new THREE.DirectionalLight(0xffffff, 0.9);
+    dirLight1.position.set(6, 8, 6);
+    scene.add(dirLight1);
+
+    const dirLight2 = new THREE.DirectionalLight(0x818cf8, 0.5);
+    dirLight2.position.set(-6, -4, -6);
+    scene.add(dirLight2);
+
+    const systems = [
+      { name: "1. Cubic", edges: "a = b = c", angles: "α = β = γ = 90°", ex: "NaCl, Cu, ZnS", a: 2.0, b: 2.0, c: 2.0, alpha: 90, beta: 90, gamma: 90, color: 0x38bdf8 },
+      { name: "2. Tetragonal", edges: "a = b ≠ c", angles: "α = β = γ = 90°", ex: "White Sn, TiO₂, CaSO₄", a: 1.6, b: 1.6, c: 2.7, alpha: 90, beta: 90, gamma: 90, color: 0x34d399 },
+      { name: "3. Orthorhombic", edges: "a ≠ b ≠ c", angles: "α = β = γ = 90°", ex: "Rhombic S, KNO₃, BaSO₄", a: 1.4, b: 2.0, c: 2.7, alpha: 90, beta: 90, gamma: 90, color: 0xfbbf24 },
+      { name: "4. Hexagonal", edges: "a = b ≠ c", angles: "α = β = 90°, γ = 120°", ex: "Graphite, ZnO, CdS", a: 1.8, b: 1.8, c: 2.6, alpha: 90, beta: 90, gamma: 120, color: 0xc084fc },
+      { name: "5. Rhombohedral", edges: "a = b = c", angles: "α = β = γ ≠ 90°", ex: "Calcite (CaCO₃), HgS", a: 2.1, b: 2.1, c: 2.1, alpha: 72, beta: 72, gamma: 72, color: 0xf472b6 },
+      { name: "6. Monoclinic", edges: "a ≠ b ≠ c", angles: "α = γ = 90°, β ≠ 90°", ex: "Monoclinic S, Na₂SO₄·10H₂O", a: 1.5, b: 2.0, c: 2.6, alpha: 90, beta: 115, gamma: 90, color: 0xfb923c },
+      { name: "7. Triclinic", edges: "a ≠ b ≠ c", angles: "α ≠ β ≠ γ ≠ 90°", ex: "K₂Cr₂O₇, CuSO₄·5H₂O, H₃BO₃", a: 1.5, b: 2.0, c: 2.5, alpha: 75, beta: 112, gamma: 80, color: 0xf43f5e }
+    ];
+
+    const cellGroup = new THREE.Group();
+    scene.add(cellGroup);
+
+    function computeCorners(sys) {
+      const deg = Math.PI / 180;
+      const al = sys.alpha * deg;
+      const be = sys.beta * deg;
+      const ga = sys.gamma * deg;
+
+      const v1 = new THREE.Vector3(sys.a, 0, 0);
+      const v2 = new THREE.Vector3(sys.b * Math.cos(ga), sys.b * Math.sin(ga), 0);
+      const cx = sys.c * Math.cos(be);
+      const cy = sys.c * (Math.cos(al) - Math.cos(be) * Math.cos(ga)) / Math.sin(ga);
+      const cz = Math.sqrt(Math.max(0.01, sys.c * sys.c - cx * cx - cy * cy));
+      const v3 = new THREE.Vector3(cx, cy, cz);
+
+      const center = new THREE.Vector3().add(v1).add(v2).add(v3).multiplyScalar(0.5);
+
+      const pts = [];
+      for (let i = 0; i <= 1; i++) {
+        for (let j = 0; j <= 1; j++) {
+          for (let k = 0; k <= 1; k++) {
+            const p = new THREE.Vector3()
+              .addScaledVector(v1, i)
+              .addScaledVector(v2, j)
+              .addScaledVector(v3, k)
+              .sub(center);
+            pts.push(p);
+          }
+        }
+      }
+      return pts;
+    }
+
+    const edgeIndices = [
+      [0,1],[0,2],[0,4],
+      [1,3],[1,5],
+      [2,3],[2,6],
+      [4,5],[4,6],
+      [3,7],[5,7],[6,7]
+    ];
+
+    const sphereGeo = new THREE.SphereGeometry(0.22, 24, 24);
+    const atomMat = new THREE.MeshStandardMaterial({ color: 0x38bdf8, roughness: 0.25, metalness: 0.25 });
+    const lineMat = new THREE.LineBasicMaterial({ color: 0x818cf8, linewidth: 2 });
+
+    let currentCorners = computeCorners(systems[0]);
+    let targetCorners = currentCorners.map(p => p.clone());
+
+    const atoms = [];
+    for (let i = 0; i < 8; i++) {
+      const m = new THREE.Mesh(sphereGeo, atomMat);
+      m.position.copy(currentCorners[i]);
+      cellGroup.add(m);
+      atoms.push(m);
+    }
+
+    const lines = [];
+    edgeIndices.forEach(pair => {
+      const geo = new THREE.BufferGeometry().setFromPoints([currentCorners[pair[0]], currentCorners[pair[1]]]);
+      const line = new THREE.Line(geo, lineMat);
+      cellGroup.add(line);
+      lines.push({ line, pair });
+    });
+
+    function selectSystem(idx, btnEl) {
+      const sys = systems[idx];
+      document.getElementById('sysName').textContent = sys.name;
+      document.getElementById('sysEdges').textContent = sys.edges;
+      document.getElementById('sysAngles').textContent = sys.angles;
+      document.getElementById('sysEx').textContent = sys.ex;
+
+      document.querySelectorAll('.controls .btn:not(#btnRotate)').forEach(b => b.classList.remove('active'));
+      if (btnEl) btnEl.classList.add('active');
+
+      targetCorners = computeCorners(sys);
+      atomMat.color.setHex(sys.color);
+      lineMat.color.setHex(sys.color);
+    }
+
+    function toggleRotate() {
+      controls.autoRotate = !controls.autoRotate;
+      document.getElementById('btnRotate').classList.toggle('active', controls.autoRotate);
+    }
+
+    function toggleInfo() {
+      document.getElementById('infoPanel').classList.toggle('show');
+    }
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    function animate() {
+      requestAnimationFrame(animate);
+
+      for (let i = 0; i < 8; i++) {
+        currentCorners[i].lerp(targetCorners[i], 0.12);
+        atoms[i].position.copy(currentCorners[i]);
+      }
+
+      lines.forEach(item => {
+        const pos = item.line.geometry.attributes.position;
+        const p1 = currentCorners[item.pair[0]];
+        const p2 = currentCorners[item.pair[1]];
+        pos.setXYZ(0, p1.x, p1.y, p1.z);
+        pos.setXYZ(1, p2.x, p2.y, p2.z);
+        pos.needsUpdate = true;
+      });
+
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    animate();
+  </script>
+</body>
+</html>

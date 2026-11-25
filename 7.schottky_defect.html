@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Schottky Defect - Master Chemistry</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; }
+    body {
+      background: radial-gradient(circle at top, #2e1525 0%, #090d16 100%);
+      color: #f8fafc;
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+      user-select: none;
+    }
+    #canvas-container {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    .top-bar {
+      position: fixed;
+      top: 12px;
+      left: 12px;
+      right: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      pointer-events: none;
+      z-index: 10;
+    }
+    .title-box {
+      background: rgba(15, 23, 42, 0.78);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(251, 113, 133, 0.45);
+      padding: 8px 14px;
+      border-radius: 12px;
+      pointer-events: auto;
+    }
+    .title-box h1 {
+      font-size: 15px;
+      font-weight: 700;
+      color: #fb7185;
+      letter-spacing: 0.3px;
+    }
+    .title-box p {
+      font-size: 11px;
+      color: #cbd5e1;
+      margin-top: 2px;
+    }
+    .info-btn {
+      background: rgba(251, 113, 133, 0.2);
+      border: 1px solid #fb7185;
+      color: #ffe4e6;
+      padding: 8px 12px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      pointer-events: auto;
+    }
+    .info-panel {
+      position: fixed;
+      top: 72px;
+      right: 12px;
+      width: 280px;
+      max-width: calc(100vw - 24px);
+      background: rgba(15, 23, 42, 0.92);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(251, 113, 133, 0.45);
+      border-radius: 14px;
+      padding: 12px 14px;
+      z-index: 15;
+      display: none;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    }
+    .info-panel.show { display: block; }
+    .info-panel h2 {
+      font-size: 13px;
+      color: #fb7185;
+      margin-bottom: 8px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+      padding-bottom: 5px;
+    }
+    .info-panel ul {
+      list-style: none;
+      font-size: 12px;
+      line-height: 1.65;
+      color: #e2e8f0;
+    }
+    .info-panel li strong { color: #38bdf8; }
+    .legend {
+      position: fixed;
+      top: 72px;
+      left: 12px;
+      background: rgba(15, 23, 42, 0.72);
+      backdrop-filter: blur(6px);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      border-radius: 10px;
+      padding: 6px 10px;
+      font-size: 11px;
+      color: #e2e8f0;
+      z-index: 10;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .legend-item { display: flex; align-items: center; gap: 6px; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+    .dot-cat { background: #38bdf8; }
+    .dot-ani { background: #f43f5e; }
+    .dot-vac { border: 1.5px dashed #fbbf24; background: transparent; }
+    .controls {
+      position: fixed;
+      bottom: 42px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 8px;
+      background: rgba(15, 23, 42, 0.82);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      padding: 8px 10px;
+      border-radius: 14px;
+      z-index: 10;
+      flex-wrap: nowrap;
+      max-width: calc(100vw - 20px);
+      overflow-x: auto;
+    }
+    .btn {
+      background: #1e293b;
+      color: #e2e8f0;
+      border: 1px solid #334155;
+      padding: 7px 11px;
+      border-radius: 9px;
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .btn.active {
+      background: #e11d48;
+      border-color: #fb7185;
+      color: #ffffff;
+    }
+    .watermark {
+      position: fixed;
+      bottom: 10px;
+      right: 12px;
+      font-size: 11px;
+      font-weight: 600;
+      color: rgba(226, 232, 240, 0.75);
+      background: rgba(15, 23, 42, 0.65);
+      padding: 4px 10px;
+      border-radius: 8px;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      z-index: 10;
+      pointer-events: none;
+    }
+    .watermark span { color: #fb7185; }
+    .hint {
+      position: fixed;
+      bottom: 12px;
+      left: 12px;
+      font-size: 10px;
+      color: rgba(148, 163, 184, 0.8);
+      z-index: 10;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="top-bar">
+    <div class="title-box">
+      <h1>Schottky Defect</h1>
+      <p>12th HSC • Solid State (3D Model)</p>
+    </div>
+    <button class="info-btn" onclick="toggleInfo()">ℹ️ Notes</button>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><span class="dot dot-cat"></span> Cation (+)</div>
+    <div class="legend-item"><span class="dot dot-ani"></span> Anion (−)</div>
+    <div class="legend-item"><span class="dot dot-vac"></span> Vacancy (Missing Ion)</div>
+  </div>
+
+  <div class="info-panel" id="infoPanel">
+    <h2>📌 Schottky Defect Key Points</h2>
+    <ul>
+      <li>• <strong>Type:</strong> Stoichiometric / Vacancy Defect</li>
+      <li>• <strong>Cause:</strong> Equal number of cations (+) and anions (−) are missing from lattice sites</li>
+      <li>• <strong>Density:</strong> <strong>Decreases</strong> (mass decreases, volume same)</li>
+      <li>• <strong>Neutrality:</strong> Electrical neutrality is maintained</li>
+      <li>• <strong>Examples:</strong> NaCl, KCl, CsCl, AgBr</li>
+    </ul>
+  </div>
+
+  <div id="canvas-container"></div>
+
+  <div class="controls">
+    <button class="btn active" id="btnDefect" onclick="setMode('defect')">Schottky Defect</button>
+    <button class="btn" id="btnNormal" onclick="setMode('normal')">Perfect Crystal</button>
+    <button class="btn active" id="btnRotate" onclick="toggleRotate()">Auto Rotate</button>
+  </div>
+
+  <div class="hint">👆 Drag to Rotate • Pinch to Zoom</div>
+  <div class="watermark">Created by <span>Kunal Ganeshakar</span> | Master Chemistry</div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+  <script>
+    const container = document.getElementById('canvas-container');
+    const scene = new THREE.Scene();
+
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.set(4.5, 3.2, 6.2);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    container.appendChild(renderer.domElement);
+
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.06;
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = 1.4;
+    controls.minDistance = 3.5;
+    controls.maxDistance = 14;
+
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.65);
+    scene.add(ambientLight);
+
+    const dirLight1 = new THREE.DirectionalLight(0xffffff, 0.9);
+    dirLight1.position.set(6, 8, 6);
+    scene.add(dirLight1);
+
+    const dirLight2 = new THREE.DirectionalLight(0xfb7185, 0.45);
+    dirLight2.position.set(-6, -4, -6);
+    scene.add(dirLight2);
+
+    const latticeGroup = new THREE.Group();
+    scene.add(latticeGroup);
+
+    const spacing = 1.35;
+    const sphereGeo = new THREE.SphereGeometry(1, 28, 28);
+    const wireGeo = new THREE.SphereGeometry(0.38, 12, 12);
+
+    const cationMat = new THREE.MeshStandardMaterial({ color: 0x38bdf8, roughness: 0.25, metalness: 0.2 });
+    const anionMat = new THREE.MeshStandardMaterial({ color: 0xf43f5e, roughness: 0.25, metalness: 0.2 });
+    const bondMat = new THREE.LineBasicMaterial({ color: 0x64748b, transparent: true, opacity: 0.45 });
+
+    const missingIons = [];
+    const vacancyMarkers = [];
+
+    // Create 3x3x2 Ionic Lattice (18 ions: 9 Cations, 9 Anions)
+    for (let ix = 0; ix < 3; ix++) {
+      for (let iy = 0; iy < 3; iy++) {
+        for (let iz = 0; iz < 2; iz++) {
+          const x = (ix - 1) * spacing;
+          const y = (iy - 1) * spacing;
+          const z = (iz - 0.5) * spacing;
+
+          const isCation = (ix + iy + iz) % 2 === 0;
+          const baseScale = isCation ? 0.34 : 0.40;
+
+          // Select 1 Cation (0,1,1) and 1 Anion (2,0,1) on the front layer to be missing
+          const isMissingCation = (ix === 0 && iy === 1 && iz === 1);
+          const isMissingAnion = (ix === 2 && iy === 0 && iz === 1);
+
+          if (isMissingCation || isMissingAnion) {
+            const mat = (isCation ? cationMat : anionMat).clone();
+            mat.transparent = true;
+            const ion = new THREE.Mesh(sphereGeo, mat);
+            ion.position.set(x, y, z);
+            ion.scale.setScalar(baseScale);
+            latticeGroup.add(ion);
+
+            missingIons.push({
+              mesh: ion,
+              home: new THREE.Vector3(x, y, z),
+              away: new THREE.Vector3(x + (isMissingCation ? -1.4 : 1.4), y + 0.6, z + 1.8),
+              baseScale: baseScale
+            });
+
+            // Glowing Vacancy Wireframe Marker
+            const vacMat = new THREE.MeshBasicMaterial({
+              color: 0xfbbf24,
+              wireframe: true,
+              transparent: true,
+              opacity: 0.85
+            });
+            const vac = new THREE.Mesh(wireGeo, vacMat);
+            vac.position.set(x, y, z);
+            latticeGroup.add(vac);
+            vacancyMarkers.push(vac);
+          } else {
+            const ion = new THREE.Mesh(sphereGeo, isCation ? cationMat : anionMat);
+            ion.position.set(x, y, z);
+            ion.scale.setScalar(baseScale);
+            latticeGroup.add(ion);
+          }
+
+          // Connect neighboring grid lines
+          if (ix < 2) {
+            const pts = [new THREE.Vector3(x, y, z), new THREE.Vector3(x + spacing, y, z)];
+            latticeGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), bondMat));
+          }
+          if (iy < 2) {
+            const pts = [new THREE.Vector3(x, y, z), new THREE.Vector3(x, y + spacing, z)];
+            latticeGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), bondMat));
+          }
+          if (iz < 1) {
+            const pts = [new THREE.Vector3(x, y, z), new THREE.Vector3(x, y, z + spacing)];
+            latticeGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), bondMat));
+          }
+        }
+      }
+    }
+
+    let isDefectMode = true;
+
+    function setMode(mode) {
+      isDefectMode = (mode === 'defect');
+      document.getElementById('btnDefect').classList.toggle('active', isDefectMode);
+      document.getElementById('btnNormal').classList.toggle('active', !isDefectMode);
+    }
+
+    function toggleRotate() {
+      controls.autoRotate = !controls.autoRotate;
+      document.getElementById('btnRotate').classList.toggle('active', controls.autoRotate);
+    }
+
+    function toggleInfo() {
+      document.getElementById('infoPanel').classList.toggle('show');
+    }
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    function animate() {
+      requestAnimationFrame(animate);
+
+      missingIons.forEach(item => {
+        const targetPos = isDefectMode ? item.away : item.home;
+        const targetOpacity = isDefectMode ? 0.0 : 1.0;
+        item.mesh.position.lerp(targetPos, 0.08);
+        item.mesh.material.opacity += (targetOpacity - item.mesh.material.opacity) * 0.1;
+        item.mesh.visible = item.mesh.material.opacity > 0.02;
+      });
+
+      vacancyMarkers.forEach(vac => {
+        const targetVacOp = isDefectMode ? 0.85 : 0.0;
+        vac.material.opacity += (targetVacOp - vac.material.opacity) * 0.1;
+        vac.rotation.y += 0.015;
+        vac.visible = vac.material.opacity > 0.02;
+      });
+
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    animate();
+  </script>
+</body>
+</html>
