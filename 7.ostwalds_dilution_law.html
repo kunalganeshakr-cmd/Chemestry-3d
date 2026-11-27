@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Ostwald's Dilution Law - Master Chemistry</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; }
+    body { background: radial-gradient(circle at top, #0f2942 0%, #090d16 100%); color: #f8fafc; overflow: hidden; height: 100vh; width: 100vw; user-select: none; }
+    #canvas-container { width: 100%; height: 100%; display: block; }
+    .top-bar { position: fixed; top: 12px; left: 12px; right: 12px; display: flex; justify-content: space-between; align-items: center; pointer-events: none; z-index: 10; }
+    .title-box { background: rgba(15,23,42,0.78); backdrop-filter: blur(8px); border: 1px solid rgba(56,189,248,0.45); padding: 8px 14px; border-radius: 12px; pointer-events: auto; }
+    .title-box h1 { font-size: 15px; font-weight: 700; color: #38bdf8; }
+    .title-box p { font-size: 11px; color: #cbd5e1; margin-top: 2px; }
+    .info-btn { background: rgba(56,189,248,0.2); border: 1px solid #38bdf8; color: #e0f2fe; padding: 8px 12px; border-radius: 10px; font-size: 12px; font-weight: 600; cursor: pointer; pointer-events: auto; }
+    .legend { position: fixed; top: 72px; left: 12px; background: rgba(15,23,42,0.78); backdrop-filter: blur(6px); border: 1px solid rgba(148,163,184,0.25); border-radius: 10px; padding: 7px 11px; font-size: 11px; color: #e2e8f0; z-index: 10; pointer-events: none; display: flex; flex-direction: column; gap: 4px; }
+    .legend-item { display: flex; align-items: center; gap: 6px; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+    .dot-h { background: #ef4444; }
+    .dot-a { background: #22c55e; }
+    .dot-ha { background: #a855f7; }
+    .status-badge { margin-top: 3px; padding-top: 4px; border-top: 1px solid rgba(148,163,184,0.2); font-size: 10.5px; color: #34d399; font-weight: 600; }
+    .info-panel { position: fixed; top: 72px; right: 12px; width: 285px; max-width: calc(100vw - 24px); background: rgba(15,23,42,0.94); backdrop-filter: blur(10px); border: 1px solid rgba(56,189,248,0.45); border-radius: 14px; padding: 12px 14px; z-index: 15; display: none; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+    .info-panel.show { display: block; }
+    .info-panel h2 { font-size: 13px; color: #38bdf8; margin-bottom: 8px; border-bottom: 1px solid rgba(148,163,184,0.25); padding-bottom: 5px; }
+    .info-panel ul { list-style: none; font-size: 11.8px; line-height: 1.65; color: #e2e8f0; }
+    .info-panel li strong { color: #fbbf24; }
+    .controls { position: fixed; bottom: 42px; left: 50%; transform: translateX(-50%); display: flex; gap: 7px; background: rgba(15,23,42,0.85); backdrop-filter: blur(8px); border: 1px solid rgba(148,163,184,0.25); padding: 8px 10px; border-radius: 14px; z-index: 10; flex-wrap: nowrap; max-width: calc(100vw - 16px); overflow-x: auto; }
+    .btn { background: #1e293b; color: #e2e8f0; border: 1px solid #334155; padding: 7px 10px; border-radius: 9px; font-size: 11.5px; font-weight: 600; white-space: nowrap; cursor: pointer; transition: 0.2s; }
+    .btn.active { background: #0284c7; border-color: #38bdf8; color: #fff; }
+    .watermark { position: fixed; bottom: 10px; right: 12px; font-size: 11px; font-weight: 600; color: rgba(226,232,240,0.75); background: rgba(15,23,42,0.65); padding: 4px 10px; border-radius: 8px; border: 1px solid rgba(148,163,184,0.2); z-index: 10; pointer-events: none; }
+    .watermark span { color: #38bdf8; }
+    .hint { position: fixed; bottom: 12px; left: 12px; font-size: 10px; color: rgba(148,163,184,0.8); z-index: 10; pointer-events: none; }
+  </style>
+</head>
+<body>
+  <div class="top-bar">
+    <div class="title-box">
+      <h1 id="mainTitle">Concentrated Weak Acid (Low α)</h1>
+      <p>12th HSC • Ch 3: Ionic Equilibria (3D Model)</p>
+    </div>
+    <button class="info-btn" onclick="toggleInfo()">ℹ️ Notes</button>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><span class="dot dot-ha"></span> Undissociated Acid (HA)</div>
+    <div class="legend-item"><span class="dot dot-h"></span> H⁺ Ion (Dissociated)</div>
+    <div class="legend-item"><span class="dot dot-a"></span> A⁻ Ion (Dissociated)</div>
+    <div class="status-badge" id="statusText">V = 1 L | α = 17% (2/12 Split)</div>
+  </div>
+
+  <div class="info-panel" id="infoPanel">
+    <h2>📌 Ostwald's Dilution Law</h2>
+    <ul>
+      <li>• <strong>Statement:</strong> For a weak electrolyte, degree of dissociation (<strong>α</strong>) is inversely proportional to square root of concentration (C).</li>
+      <li>• <strong>Formula:</strong> <strong>α = √(K<sub>a</sub> / C) = √(K<sub>a</sub> · V)</strong></li>
+      <li>• <strong>Effect of Dilution:</strong> Adding water increases volume (V), decreases C, and <strong>increases α</strong>.</li>
+      <li>• <strong>Limitation:</strong> Valid only for weak electrolytes, not strong electrolytes.</li>
+    </ul>
+  </div>
+
+  <div id="canvas-container"></div>
+
+  <div class="controls">
+    <button class="btn active" id="btnV1" onclick="setDilution(1)">Conc. (V = 1L)</button>
+    <button class="btn" id="btnV2" onclick="setDilution(2)">Dilute (V = 4L)</button>
+    <button class="btn" id="btnV3" onclick="setDilution(3)">Very Dilute (V = 16L)</button>
+    <button class="btn active" id="btnRotate" onclick="toggleRotate()">Auto Rotate</button>
+  </div>
+
+  <div class="hint">👆 Drag to Rotate • Pinch to Zoom</div>
+  <div class="watermark">Created by <span>Kunal Ganeshakar</span> | Master Chemistry</div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script>
+    const container = document.getElementById('canvas-container');
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.set(0, 2.2, 8.0);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    container.appendChild(renderer.domElement);
+
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true; controls.dampingFactor = 0.06;
+    controls.autoRotate = true; controls.autoRotateSpeed = 0.9;
+
+    scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+    const d1 = new THREE.DirectionalLight(0xffffff, 0.9); d1.position.set(6, 8, 6); scene.add(d1);
+    const d2 = new THREE.DirectionalLight(0x38bdf8, 0.45); d2.position.set(-6, -4, -6); scene.add(d2);
+
+    const root = new THREE.Group();
+    scene.add(root);
+
+    const cylR = 1.65, cylH = 4.0, bottomY = -2.0;
+    const beaker = new THREE.Mesh(
+      new THREE.CylinderGeometry(cylR, cylR, cylH, 36, 1, true),
+      new THREE.MeshPhysicalMaterial({ color: 0x93c5fd, transparent: true, opacity: 0.16, side: THREE.DoubleSide, depthWrite: false })
+    );
+    root.add(beaker);
+
+    const liqMesh = new THREE.Mesh(
+      new THREE.CylinderGeometry(cylR - 0.05, cylR - 0.05, 1.0, 36),
+      new THREE.MeshPhysicalMaterial({ color: 0x0284c7, transparent: true, opacity: 0.24, depthWrite: false })
+    );
+    root.add(liqMesh);
+
+    const sGeo = new THREE.SphereGeometry(0.13, 16, 16);
+    const hMat = new THREE.MeshStandardMaterial({ color: 0xef4444, emissive: 0x7f1d1d });
+    const aMat = new THREE.MeshStandardMaterial({ color: 0x22c55e, emissive: 0x14532d });
+    const haMat = new THREE.MeshStandardMaterial({ color: 0xa855f7, emissive: 0x581c87 });
+
+    const pairs = [];
+    for (let i = 0; i < 12; i++) {
+      const mH = new THREE.Mesh(sGeo, haMat); mH.scale.setScalar(0.85);
+      const mA = new THREE.Mesh(sGeo, haMat); mA.scale.setScalar(1.15);
+      const angle = (i / 12) * Math.PI * 2;
+      const r = 0.45 + (i % 2) * 0.68;
+      const center = new THREE.Vector3(r * Math.cos(angle), bottomY + 0.4 + (i % 3) * 0.35, r * Math.sin(angle));
+      root.add(mH, mA);
+      pairs.push({
+        idx: i, mH, mA, center,
+        vel: new THREE.Vector3((Math.random()-0.5)*0.02, (Math.random()-0.5)*0.015, (Math.random()-0.5)*0.02),
+        dir: new THREE.Vector3(Math.random()-0.5, Math.random()-0.5, Math.random()-0.5).normalize(),
+        sep: 0.14
+      });
+    }
+
+    let level = 1; // 1 = Conc, 2 = Dilute, 3 = Very Dilute
+    let currentLiqH = 1.45;
+
+    function setDilution(lv) {
+      level = lv;
+      document.getElementById('btnV1').classList.toggle('active', lv === 1);
+      document.getElementById('btnV2').classList.toggle('active', lv === 2);
+      document.getElementById('btnV3').classList.toggle('active', lv === 3);
+
+      const splitCount = lv === 1 ? 2 : (lv === 2 ? 5 : 10);
+      pairs.forEach(p => {
+        const isSplit = p.idx < splitCount;
+        p.mH.material = isSplit ? hMat : haMat;
+        p.mA.material = isSplit ? aMat : haMat;
+      });
+
+      if (lv === 1) {
+        document.getElementById('mainTitle').textContent = 'Concentrated Weak Acid (Low α)';
+        document.getElementById('statusText').textContent = 'V = 1 L | α = 17% (2/12 Split)';
+        document.getElementById('statusText').style.color = '#fbbf24';
+      } else if (lv === 2) {
+        document.getElementById('mainTitle').textContent = 'Diluted Weak Acid (Medium α)';
+        document.getElementById('statusText').textContent = 'V = 4 L (Water Added) | α = 42% (5/12 Split)';
+        document.getElementById('statusText').style.color = '#38bdf8';
+      } else {
+        document.getElementById('mainTitle').textContent = 'Very Dilute Weak Acid (High α)';
+        document.getElementById('statusText').textContent = 'V = 16 L (High Dilution) | α = 83% (10/12 Split)';
+        document.getElementById('statusText').style.color = '#34d399';
+      }
+    }
+    setDilution(1);
+
+    function toggleRotate() { controls.autoRotate = !controls.autoRotate; document.getElementById('btnRotate').classList.toggle('active', controls.autoRotate); }
+    function toggleInfo() { document.getElementById('infoPanel').classList.toggle('show'); }
+    window.addEventListener('resize', () => { camera.aspect = window.innerWidth/window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); });
+
+    function animate() {
+      requestAnimationFrame(animate);
+      const targetH = level === 1 ? 1.45 : (level === 2 ? 2.55 : 3.65);
+      currentLiqH += (targetH - currentLiqH) * 0.08;
+      liqMesh.scale.y = currentLiqH;
+      liqMesh.position.y = bottomY + currentLiqH / 2;
+      const topY = bottomY + currentLiqH - 0.25;
+
+      const splitCount = level === 1 ? 2 : (level === 2 ? 5 : 10);
+      const maxR = cylR - 0.35;
+
+      pairs.forEach(p => {
+        const isSplit = p.idx < splitCount;
+        p.sep += ((isSplit ? 0.52 : 0.14) - p.sep) * 0.08;
+        p.center.add(p.vel);
+
+        const rSq = p.center.x**2 + p.center.z**2;
+        if (rSq > maxR*maxR) { p.vel.x *= -1; p.vel.z *= -1; }
+        if (p.center.y > topY) { p.center.y = topY; p.vel.y = -Math.abs(p.vel.y); }
+        if (p.center.y < bottomY + 0.25) { p.center.y = bottomY + 0.25; p.vel.y = Math.abs(p.vel.y); }
+
+        p.mH.position.copy(p.center).addScaledVector(p.dir, p.sep);
+        p.mA.position.copy(p.center).addScaledVector(p.dir, -p.sep);
+      });
+
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    animate();
+  </script>
+</body>
+</html>

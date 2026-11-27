@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Bronsted-Lowry Theory - Master Chemistry</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; }
+    body { background: radial-gradient(circle at top, #0f2942 0%, #090d16 100%); color: #f8fafc; overflow: hidden; height: 100vh; width: 100vw; user-select: none; }
+    #canvas-container { width: 100%; height: 100%; display: block; }
+    .top-bar { position: fixed; top: 12px; left: 12px; right: 12px; display: flex; justify-content: space-between; align-items: center; pointer-events: none; z-index: 10; }
+    .title-box { background: rgba(15,23,42,0.78); backdrop-filter: blur(8px); border: 1px solid rgba(56,189,248,0.45); padding: 8px 14px; border-radius: 12px; pointer-events: auto; }
+    .title-box h1 { font-size: 15px; font-weight: 700; color: #38bdf8; }
+    .title-box p { font-size: 11px; color: #cbd5e1; margin-top: 2px; }
+    .info-btn { background: rgba(56,189,248,0.2); border: 1px solid #38bdf8; color: #e0f2fe; padding: 8px 12px; border-radius: 10px; font-size: 12px; font-weight: 600; cursor: pointer; pointer-events: auto; }
+    .legend { position: fixed; top: 72px; left: 12px; background: rgba(15,23,42,0.78); backdrop-filter: blur(6px); border: 1px solid rgba(148,163,184,0.25); border-radius: 10px; padding: 7px 11px; font-size: 11px; color: #e2e8f0; z-index: 10; pointer-events: none; display: flex; flex-direction: column; gap: 4px; }
+    .legend-item { display: flex; align-items: center; gap: 6px; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+    .dot-p { background: #facc15; box-shadow: 0 0 6px #facc15; }
+    .dot-n { background: #38bdf8; }
+    .dot-o { background: #ef4444; }
+    .status-badge { margin-top: 3px; padding-top: 4px; border-top: 1px solid rgba(148,163,184,0.2); font-size: 10.5px; color: #34d399; font-weight: 600; }
+    .info-panel { position: fixed; top: 72px; right: 12px; width: 285px; max-width: calc(100vw - 24px); background: rgba(15,23,42,0.94); backdrop-filter: blur(10px); border: 1px solid rgba(56,189,248,0.45); border-radius: 14px; padding: 12px 14px; z-index: 15; display: none; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+    .info-panel.show { display: block; }
+    .info-panel h2 { font-size: 13px; color: #38bdf8; margin-bottom: 8px; border-bottom: 1px solid rgba(148,163,184,0.25); padding-bottom: 5px; }
+    .info-panel ul { list-style: none; font-size: 11.8px; line-height: 1.65; color: #e2e8f0; }
+    .info-panel li strong { color: #fbbf24; }
+    .controls { position: fixed; bottom: 42px; left: 50%; transform: translateX(-50%); display: flex; gap: 7px; background: rgba(15,23,42,0.85); backdrop-filter: blur(8px); border: 1px solid rgba(148,163,184,0.25); padding: 8px 10px; border-radius: 14px; z-index: 10; flex-wrap: nowrap; max-width: calc(100vw - 16px); overflow-x: auto; }
+    .btn { background: #1e293b; color: #e2e8f0; border: 1px solid #334155; padding: 7px 10px; border-radius: 9px; font-size: 11.5px; font-weight: 600; white-space: nowrap; cursor: pointer; transition: 0.2s; }
+    .btn.active { background: #0284c7; border-color: #38bdf8; color: #fff; }
+    .watermark { position: fixed; bottom: 10px; right: 12px; font-size: 11px; font-weight: 600; color: rgba(226,232,240,0.75); background: rgba(15,23,42,0.65); padding: 4px 10px; border-radius: 8px; border: 1px solid rgba(148,163,184,0.2); z-index: 10; pointer-events: none; }
+    .watermark span { color: #38bdf8; }
+    .hint { position: fixed; bottom: 12px; left: 12px; font-size: 10px; color: rgba(148,163,184,0.8); z-index: 10; pointer-events: none; }
+  </style>
+</head>
+<body>
+  <div class="top-bar">
+    <div class="title-box">
+      <h1 id="mainTitle">Proton Transfer (NH₃ + H₂O)</h1>
+      <p>12th HSC • Ch 3: Ionic Equilibria (3D Model)</p>
+    </div>
+    <button class="info-btn" onclick="toggleInfo()">ℹ️ Notes</button>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><span class="dot dot-p"></span> Transferable Proton (H⁺)</div>
+    <div class="legend-item"><span class="dot dot-n"></span> Nitrogen Core (NH₃ / NH₄⁺)</div>
+    <div class="legend-item"><span class="dot dot-o"></span> Oxygen Core (H₂O / OH⁻)</div>
+    <div class="status-badge" id="statusText">NH₃ (Base) + H₂O (Acid) ⇌ NH₄⁺ + OH⁻</div>
+  </div>
+
+  <div class="info-panel" id="infoPanel">
+    <h2>📌 Bronsted-Lowry Theory</h2>
+    <ul>
+      <li>• <strong>Bronsted Acid:</strong> Proton (<strong>H⁺</strong>) donor (Ex: H₂O → H⁺ + OH⁻).</li>
+      <li>• <strong>Bronsted Base:</strong> Proton (<strong>H⁺</strong>) acceptor (Ex: NH₃ + H⁺ → NH₄⁺).</li>
+      <li>• <strong>Conjugate Acid-Base Pair:</strong> Differ by a single proton (H⁺). Example: <strong>NH₄⁺ / NH₃</strong> and <strong>H₂O / OH⁻</strong>.</li>
+    </ul>
+  </div>
+
+  <div id="canvas-container"></div>
+
+  <div class="controls">
+    <button class="btn active" id="btnReactants" onclick="setStage('reactants')">1. Before Transfer</button>
+    <button class="btn" id="btnTransfer" onclick="setStage('transfer')">2. H⁺ Transfer</button>
+    <button class="btn" id="btnProducts" onclick="setStage('products')">3. Conjugate Pair</button>
+    <button class="btn active" id="btnRotate" onclick="toggleRotate()">Auto Rotate</button>
+  </div>
+
+  <div class="hint">👆 Drag to Rotate • Pinch to Zoom</div>
+  <div class="watermark">Created by <span>Kunal Ganeshakar</span> | Master Chemistry</div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script>
+    const container = document.getElementById('canvas-container');
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.set(0, 1.8, 7.2);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    container.appendChild(renderer.domElement);
+
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true; controls.dampingFactor = 0.06;
+    controls.autoRotate = true; controls.autoRotateSpeed = 1.0;
+
+    scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+    const d1 = new THREE.DirectionalLight(0xffffff, 0.9); d1.position.set(5, 7, 5); scene.add(d1);
+    const d2 = new THREE.DirectionalLight(0x38bdf8, 0.5); d2.position.set(-5, -4, -5); scene.add(d2);
+
+    const root = new THREE.Group();
+    scene.add(root);
+
+    const sGeo = new THREE.SphereGeometry(1, 24, 24);
+    const nMat = new THREE.MeshStandardMaterial({ color: 0x38bdf8, emissive: 0x0369a1, roughness: 0.25 });
+    const oMat = new THREE.MeshStandardMaterial({ color: 0xef4444, emissive: 0x7f1d1d, roughness: 0.25 });
+    const hMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.25 });
+    const pMat = new THREE.MeshStandardMaterial({ color: 0xfacc15, emissive: 0xca8a04, roughness: 0.2 });
+
+    // Left: NH3 Group (at x = -1.45)
+    const nh3Group = new THREE.Group();
+    nh3Group.position.set(-1.45, 0, 0);
+    const nAtom = new THREE.Mesh(sGeo, nMat); nAtom.scale.setScalar(0.38);
+    nh3Group.add(nAtom);
+    [[-0.35, 0.3, 0.2], [-0.35, -0.3, 0.2], [-0.35, 0, -0.32]].forEach(pos => {
+      const h = new THREE.Mesh(sGeo, hMat); h.scale.setScalar(0.18); h.position.set(...pos);
+      nh3Group.add(h);
+    });
+    root.add(nh3Group);
+
+    // Right: H2O Group (at x = +1.45)
+    const h2oGroup = new THREE.Group();
+    h2oGroup.position.set(1.45, 0, 0);
+    const oAtom = new THREE.Mesh(sGeo, oMat); oAtom.scale.setScalar(0.36);
+    h2oGroup.add(oAtom);
+    const fixedH = new THREE.Mesh(sGeo, hMat); fixedH.scale.setScalar(0.18); fixedH.position.set(0.35, -0.25, 0.2);
+    h2oGroup.add(fixedH);
+    root.add(h2oGroup);
+
+    // Transferable H+ Proton
+    const proton = new THREE.Mesh(sGeo, pMat);
+    proton.scale.setScalar(0.21);
+    proton.position.set(1.1, 0.25, 0.15);
+    root.add(proton);
+
+    // Connecting Bridge Line for Proton Path
+    const pathLine = new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-1.05, 0, 0), new THREE.Vector3(1.1, 0.25, 0.15)]),
+      new THREE.LineBasicMaterial({ color: 0xfacc15, transparent: true, opacity: 0.45 })
+    );
+    root.add(pathLine);
+
+    let stage = 'reactants'; // 'reactants' | 'transfer' | 'products'
+    let tProgress = 0; // 0 = at H2O, 1 = attached to NH3
+    let clock = 0;
+
+    function setStage(s) {
+      stage = s;
+      document.getElementById('btnReactants').classList.toggle('active', s === 'reactants');
+      document.getElementById('btnTransfer').classList.toggle('active', s === 'transfer');
+      document.getElementById('btnProducts').classList.toggle('active', s === 'products');
+
+      if (s === 'reactants') {
+        document.getElementById('mainTitle').textContent = 'Before Proton Transfer';
+        document.getElementById('statusText').textContent = 'NH₃ (Base) + H₂O (Acid) — Ready';
+        document.getElementById('statusText').style.color = '#38bdf8';
+      } else if (s === 'transfer') {
+        document.getElementById('mainTitle').textContent = 'H⁺ Moving from H₂O to NH₃';
+        document.getElementById('statusText').textContent = 'Acid donates H⁺ → Base accepts H⁺';
+        document.getElementById('statusText').style.color = '#facc15';
+      } else {
+        document.getElementById('mainTitle').textContent = 'Conjugate Acid & Base Formed';
+        document.getElementById('statusText').textContent = 'NH₄⁺ (Conj. Acid) + OH⁻ (Conj. Base)';
+        document.getElementById('statusText').style.color = '#34d399';
+      }
+    }
+
+    function toggleRotate() { controls.autoRotate = !controls.autoRotate; document.getElementById('btnRotate').classList.toggle('active', controls.autoRotate); }
+    function toggleInfo() { document.getElementById('infoPanel').classList.toggle('show'); }
+    window.addEventListener('resize', () => { camera.aspect = window.innerWidth/window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); });
+
+    function animate() {
+      requestAnimationFrame(animate);
+      clock += 0.04;
+
+      const targetT = (stage === 'reactants') ? 0.0 : (stage === 'transfer' ? 0.5 : 1.0);
+      tProgress += (targetT - tProgress) * 0.07;
+
+      const startPos = new THREE.Vector3(1.12, 0.25, 0.15);
+      const endPos = new THREE.Vector3(-1.05, 0.05, 0.15);
+      proton.position.lerpVectors(startPos, endPos, tProgress);
+      proton.position.y += Math.sin(clock * 2) * 0.04;
+
+      nh3Group.position.y = Math.sin(clock) * 0.08;
+      h2oGroup.position.y = -Math.sin(clock) * 0.08;
+
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    animate();
+  </script>
+</body>
+</html>

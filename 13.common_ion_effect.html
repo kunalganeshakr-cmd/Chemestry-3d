@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Common Ion Effect - Master Chemistry</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; }
+    body { background: radial-gradient(circle at top, #1e1b4b 0%, #090d16 100%); color: #f8fafc; overflow: hidden; height: 100vh; width: 100vw; user-select: none; }
+    #canvas-container { width: 100%; height: 100%; display: block; }
+    .top-bar { position: fixed; top: 12px; left: 12px; right: 12px; display: flex; justify-content: space-between; align-items: center; pointer-events: none; z-index: 10; }
+    .title-box { background: rgba(15,23,42,0.78); backdrop-filter: blur(8px); border: 1px solid rgba(167,139,250,0.45); padding: 8px 14px; border-radius: 12px; pointer-events: auto; }
+    .title-box h1 { font-size: 15px; font-weight: 700; color: #a78bfa; }
+    .title-box p { font-size: 11px; color: #cbd5e1; margin-top: 2px; }
+    .info-btn { background: rgba(167,139,250,0.2); border: 1px solid #a78bfa; color: #ede9fe; padding: 8px 12px; border-radius: 10px; font-size: 12px; font-weight: 600; cursor: pointer; pointer-events: auto; }
+    .legend { position: fixed; top: 72px; left: 12px; background: rgba(15,23,42,0.78); backdrop-filter: blur(6px); border: 1px solid rgba(148,163,184,0.25); border-radius: 10px; padding: 7px 11px; font-size: 11px; color: #e2e8f0; z-index: 10; pointer-events: none; display: flex; flex-direction: column; gap: 4px; }
+    .legend-item { display: flex; align-items: center; gap: 6px; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+    .dot-ha { background: #facc15; }
+    .dot-h { background: #ef4444; }
+    .dot-ac { background: #22c55e; }
+    .dot-na { background: #38bdf8; }
+    .status-badge { margin-top: 3px; padding-top: 4px; border-top: 1px solid rgba(148,163,184,0.2); font-size: 10.5px; color: #34d399; font-weight: 700; }
+    .info-panel { position: fixed; top: 72px; right: 12px; width: 290px; max-width: calc(100vw - 24px); background: rgba(15,23,42,0.94); backdrop-filter: blur(10px); border: 1px solid rgba(167,139,250,0.45); border-radius: 14px; padding: 12px 14px; z-index: 15; display: none; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+    .info-panel.show { display: block; }
+    .info-panel h2 { font-size: 13px; color: #a78bfa; margin-bottom: 8px; border-bottom: 1px solid rgba(148,163,184,0.25); padding-bottom: 5px; }
+    .info-panel ul { list-style: none; font-size: 11.5px; line-height: 1.6; color: #e2e8f0; }
+    .info-panel li strong { color: #fbbf24; }
+    .controls { position: fixed; bottom: 42px; left: 50%; transform: translateX(-50%); display: flex; gap: 7px; background: rgba(15,23,42,0.85); backdrop-filter: blur(8px); border: 1px solid rgba(148,163,184,0.25); padding: 8px 10px; border-radius: 14px; z-index: 10; flex-wrap: nowrap; max-width: calc(100vw - 16px); overflow-x: auto; }
+    .btn { background: #1e293b; color: #e2e8f0; border: 1px solid #334155; padding: 7px 10px; border-radius: 9px; font-size: 11.5px; font-weight: 600; white-space: nowrap; cursor: pointer; transition: 0.2s; }
+    .btn.active { background: #7c3aed; border-color: #a78bfa; color: #fff; }
+    .watermark { position: fixed; bottom: 10px; right: 12px; font-size: 11px; font-weight: 600; color: rgba(226,232,240,0.75); background: rgba(15,23,42,0.65); padding: 4px 10px; border-radius: 8px; border: 1px solid rgba(148,163,184,0.2); z-index: 10; pointer-events: none; }
+    .watermark span { color: #a78bfa; }
+    .hint { position: fixed; bottom: 12px; left: 12px; font-size: 10px; color: rgba(148,163,184,0.8); z-index: 10; pointer-events: none; }
+  </style>
+</head>
+<body>
+  <div class="top-bar">
+    <div class="title-box">
+      <h1 id="mainTitle">Weak Acid Only (CH₃COOH)</h1>
+      <p>12th HSC • Ch 3: Ionic Equilibria (3D Model)</p>
+    </div>
+    <button class="info-btn" onclick="toggleInfo()">ℹ️ Notes</button>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><span class="dot dot-ha"></span> Undissociated CH₃COOH</div>
+    <div class="legend-item"><span class="dot dot-h"></span> H⁺ Ion (Proton)</div>
+    <div class="legend-item"><span class="dot dot-ac"></span> CH₃COO⁻ (Common Ion)</div>
+    <div class="legend-item"><span class="dot dot-na"></span> Na⁺ Ion (from CH₃COONa)</div>
+    <div class="status-badge" id="statusText">α = 40% (4/10 Split) | Moderate [H⁺]</div>
+  </div>
+
+  <div class="info-panel" id="infoPanel">
+    <h2>📌 Common Ion Effect</h2>
+    <ul>
+      <li>• <strong>Definition:</strong> Suppression of ionization of a weak electrolyte by adding a strong electrolyte containing a <strong>common ion</strong>.</li>
+      <li>• <strong>Equilibrium:</strong> CH₃COOH ⇌ <strong>CH₃COO⁻</strong> + H⁺</li>
+      <li>• <strong>Adding CH₃COONa:</strong> Increases [CH₃COO⁻] → By <strong>Le Chatelier's principle</strong>, equilibrium shifts backward → [H⁺] and α decrease.</li>
+    </ul>
+  </div>
+
+  <div id="canvas-container"></div>
+
+  <div class="controls">
+    <button class="btn active" id="btnOnly" onclick="setCommonIon(false)">1. CH₃COOH Only</button>
+    <button class="btn" id="btnAdd" onclick="setCommonIon(true)">2. + Add CH₃COONa</button>
+    <button class="btn active" id="btnRotate" onclick="toggleRotate()">Auto Rotate</button>
+  </div>
+
+  <div class="hint">👆 Drag to Rotate • Pinch to Zoom</div>
+  <div class="watermark">Created by <span>Kunal Ganeshakar</span> | Master Chemistry</div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script>
+    const container = document.getElementById('canvas-container');
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.set(0, 2.0, 7.6);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    container.appendChild(renderer.domElement);
+
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true; controls.dampingFactor = 0.06;
+    controls.autoRotate = true; controls.autoRotateSpeed = 0.9;
+
+    scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+    const d1 = new THREE.DirectionalLight(0xffffff, 0.9); d1.position.set(6, 8, 6); scene.add(d1);
+
+    const root = new THREE.Group();
+    scene.add(root);
+
+    const cylR = 1.65;
+    const beaker = new THREE.Mesh(
+      new THREE.CylinderGeometry(cylR, cylR, 3.8, 36, 1, true),
+      new THREE.MeshPhysicalMaterial({ color: 0xe2e8f0, transparent: true, opacity: 0.16, side: THREE.DoubleSide, depthWrite: false })
+    );
+    root.add(beaker);
+
+    const liq = new THREE.Mesh(
+      new THREE.CylinderGeometry(cylR - 0.05, cylR - 0.05, 3.2, 36),
+      new THREE.MeshPhysicalMaterial({ color: 0x6366f1, transparent: true, opacity: 0.24, depthWrite: false })
+    );
+    liq.position.y = -0.2;
+    root.add(liq);
+
+    const sGeo = new THREE.SphereGeometry(0.13, 16, 16);
+    const haMat = new THREE.MeshStandardMaterial({ color: 0xfacc15, emissive: 0xa16207 });
+    const hMat  = new THREE.MeshStandardMaterial({ color: 0xef4444, emissive: 0x991b1b });
+    const acMat = new THREE.MeshStandardMaterial({ color: 0x22c55e, emissive: 0x14532d });
+    const naMat = new THREE.MeshStandardMaterial({ color: 0x38bdf8, emissive: 0x0369a1 });
+
+    // 10 CH3COOH pairs
+    const acidPairs = [];
+    for (let i = 0; i < 10; i++) {
+      const mH = new THREE.Mesh(sGeo, hMat); mH.scale.setScalar(0.82);
+      const mAc = new THREE.Mesh(sGeo, acMat); mAc.scale.setScalar(1.12);
+      const a = Math.random() * Math.PI * 2, r = Math.sqrt(Math.random()) * (cylR - 0.35);
+      const center = new THREE.Vector3(r * Math.cos(a), -1.4 + Math.random() * 2.5, r * Math.sin(a));
+      root.add(mH, mAc);
+      acidPairs.push({
+        idx: i, mH, mAc, center,
+        vel: new THREE.Vector3((Math.random()-0.5)*0.02, (Math.random()-0.5)*0.02, (Math.random()-0.5)*0.02),
+        dir: new THREE.Vector3(Math.random()-0.5, Math.random()-0.5, Math.random()-0.5).normalize(),
+        sep: 0.14
+      });
+    }
+
+    // Extra ions from CH3COONa (6 Na+ and 6 CH3COO-)
+    const saltIons = [];
+    for (let i = 0; i < 12; i++) {
+      const m = new THREE.Mesh(sGeo, i < 6 ? naMat : acMat);
+      const a = Math.random() * Math.PI * 2, r = Math.sqrt(Math.random()) * (cylR - 0.3);
+      m.position.set(r * Math.cos(a), -1.5 + Math.random() * 2.6, r * Math.sin(a));
+      m.visible = false;
+      root.add(m);
+      saltIons.push({ mesh: m, vel: new THREE.Vector3((Math.random()-0.5)*0.024, (Math.random()-0.5)*0.024, (Math.random()-0.5)*0.024) });
+    }
+
+    let hasSalt = false;
+    function setCommonIon(added) {
+      hasSalt = added;
+      document.getElementById('btnOnly').classList.toggle('active', !added);
+      document.getElementById('btnAdd').classList.toggle('active', added);
+
+      const splitLimit = added ? 1 : 4; // Drops from 4/10 (40%) to 1/10 (10%)
+      acidPairs.forEach(p => {
+        const isSplit = p.idx < splitLimit;
+        p.mH.material = isSplit ? hMat : haMat;
+        p.mAc.material = isSplit ? acMat : haMat;
+      });
+      saltIons.forEach(s => s.mesh.visible = added);
+
+      if (!added) {
+        document.getElementById('mainTitle').textContent = 'Weak Acid Only (CH₃COOH)';
+        document.getElementById('statusText').textContent = 'α = 40% (4/10 Split) | Moderate [H⁺]';
+        document.getElementById('statusText').style.color = '#34d399';
+      } else {
+        document.getElementById('mainTitle').textContent = 'Common Ion Added (+ CH₃COONa)';
+        document.getElementById('statusText').textContent = 'Excess CH₃COO⁻ → α Drops to 10% (Backward Shift)';
+        document.getElementById('statusText').style.color = '#fbbf24';
+      }
+    }
+    setCommonIon(false);
+
+    function toggleRotate() { controls.autoRotate = !controls.autoRotate; document.getElementById('btnRotate').classList.toggle('active', controls.autoRotate); }
+    function toggleInfo() { document.getElementById('infoPanel').classList.toggle('show'); }
+    window.addEventListener('resize', () => { camera.aspect = window.innerWidth/window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); });
+
+    function animate() {
+      requestAnimationFrame(animate);
+      const maxR = cylR - 0.3;
+      const splitLimit = hasSalt ? 1 : 4;
+
+      acidPairs.forEach(p => {
+        const isSplit = p.idx < splitLimit;
+        p.sep += ((isSplit ? 0.55 : 0.14) - p.sep) * 0.08;
+        p.center.add(p.vel);
+        if (p.center.x**2 + p.center.z**2 > maxR*maxR) { p.vel.x *= -1; p.vel.z *= -1; }
+        if (p.center.y > 1.15 || p.center.y < -1.55) p.vel.y *= -1;
+
+        p.mH.position.copy(p.center).addScaledVector(p.dir, p.sep);
+        p.mAc.position.copy(p.center).addScaledVector(p.dir, -p.sep);
+      });
+
+      if (hasSalt) {
+        saltIons.forEach(s => {
+          s.mesh.position.add(s.vel);
+          if (s.mesh.position.x**2 + s.mesh.position.z**2 > maxR*maxR) { s.vel.x *= -1; s.vel.z *= -1; }
+          if (s.mesh.position.y > 1.2 || s.mesh.position.y < -1.6) s.vel.y *= -1;
+        });
+      }
+
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    animate();
+  </script>
+</body>
+</html>

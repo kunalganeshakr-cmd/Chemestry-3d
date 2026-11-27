@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Autoionization of Water - Master Chemistry</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; }
+    body { background: radial-gradient(circle at top, #0c2d48 0%, #090d16 100%); color: #f8fafc; overflow: hidden; height: 100vh; width: 100vw; user-select: none; }
+    #canvas-container { width: 100%; height: 100%; display: block; }
+    .top-bar { position: fixed; top: 12px; left: 12px; right: 12px; display: flex; justify-content: space-between; align-items: center; pointer-events: none; z-index: 10; }
+    .title-box { background: rgba(15,23,42,0.78); backdrop-filter: blur(8px); border: 1px solid rgba(56,189,248,0.45); padding: 8px 14px; border-radius: 12px; pointer-events: auto; }
+    .title-box h1 { font-size: 15px; font-weight: 700; color: #38bdf8; }
+    .title-box p { font-size: 11px; color: #cbd5e1; margin-top: 2px; }
+    .info-btn { background: rgba(56,189,248,0.2); border: 1px solid #38bdf8; color: #e0f2fe; padding: 8px 12px; border-radius: 10px; font-size: 12px; font-weight: 600; cursor: pointer; pointer-events: auto; }
+    .legend { position: fixed; top: 72px; left: 12px; background: rgba(15,23,42,0.78); backdrop-filter: blur(6px); border: 1px solid rgba(148,163,184,0.25); border-radius: 10px; padding: 7px 11px; font-size: 11px; color: #e2e8f0; z-index: 10; pointer-events: none; display: flex; flex-direction: column; gap: 4px; }
+    .legend-item { display: flex; align-items: center; gap: 6px; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+    .dot-o { background: #ef4444; }
+    .dot-h { background: #f8fafc; }
+    .dot-p { background: #facc15; box-shadow: 0 0 6px #facc15; }
+    .status-badge { margin-top: 3px; padding-top: 4px; border-top: 1px solid rgba(148,163,184,0.2); font-size: 10.5px; color: #34d399; font-weight: 600; }
+    .info-panel { position: fixed; top: 72px; right: 12px; width: 285px; max-width: calc(100vw - 24px); background: rgba(15,23,42,0.94); backdrop-filter: blur(10px); border: 1px solid rgba(56,189,248,0.45); border-radius: 14px; padding: 12px 14px; z-index: 15; display: none; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+    .info-panel.show { display: block; }
+    .info-panel h2 { font-size: 13px; color: #38bdf8; margin-bottom: 8px; border-bottom: 1px solid rgba(148,163,184,0.25); padding-bottom: 5px; }
+    .info-panel ul { list-style: none; font-size: 11.8px; line-height: 1.65; color: #e2e8f0; }
+    .info-panel li strong { color: #fbbf24; }
+    .controls { position: fixed; bottom: 42px; left: 50%; transform: translateX(-50%); display: flex; gap: 7px; background: rgba(15,23,42,0.85); backdrop-filter: blur(8px); border: 1px solid rgba(148,163,184,0.25); padding: 8px 10px; border-radius: 14px; z-index: 10; flex-wrap: nowrap; max-width: calc(100vw - 16px); overflow-x: auto; }
+    .btn { background: #1e293b; color: #e2e8f0; border: 1px solid #334155; padding: 7px 10px; border-radius: 9px; font-size: 11.5px; font-weight: 600; white-space: nowrap; cursor: pointer; transition: 0.2s; }
+    .btn.active { background: #0284c7; border-color: #38bdf8; color: #fff; }
+    .watermark { position: fixed; bottom: 10px; right: 12px; font-size: 11px; font-weight: 600; color: rgba(226,232,240,0.75); background: rgba(15,23,42,0.65); padding: 4px 10px; border-radius: 8px; border: 1px solid rgba(148,163,184,0.2); z-index: 10; pointer-events: none; }
+    .watermark span { color: #38bdf8; }
+    .hint { position: fixed; bottom: 12px; left: 12px; font-size: 10px; color: rgba(148,163,184,0.8); z-index: 10; pointer-events: none; }
+  </style>
+</head>
+<body>
+  <div class="top-bar">
+    <div class="title-box">
+      <h1 id="mainTitle">Autoionization of Water (Kw)</h1>
+      <p>12th HSC • Ch 3: Ionic Equilibria (3D Model)</p>
+    </div>
+    <button class="info-btn" onclick="toggleInfo()">ℹ️ Notes</button>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><span class="dot dot-o"></span> Oxygen Atom (O)</div>
+    <div class="legend-item"><span class="dot dot-h"></span> Hydrogen Atom (H)</div>
+    <div class="legend-item"><span class="dot dot-p"></span> Transferred Proton (H⁺)</div>
+    <div class="status-badge" id="statusText">H₂O + H₂O ⇌ H₃O⁺ + OH⁻ (Kw = 10⁻¹⁴)</div>
+  </div>
+
+  <div class="info-panel" id="infoPanel">
+    <h2>📌 Ionic Product of Water (K<sub>w</sub>)</h2>
+    <ul>
+      <li>• <strong>Autoionization:</strong> Pure water self-ionizes slightly into H₃O⁺ and OH⁻ ions.</li>
+      <li>• <strong>Ionic Product:</strong> <strong>K<sub>w</sub> = [H₃O⁺][OH⁻] = 1.0 × 10⁻¹⁴</strong> at 298 K.</li>
+      <li>• <strong>Neutral Water:</strong> [H₃O⁺] = [OH⁻] = <strong>10⁻⁷ M</strong> (pH = 7).</li>
+    </ul>
+  </div>
+
+  <div id="canvas-container"></div>
+
+  <div class="controls">
+    <button class="btn active" id="btnMol" onclick="setState('mol')">2 H₂O Molecules</button>
+    <button class="btn" id="btnIon" onclick="setState('ion')">H₃O⁺ + OH⁻ Ions</button>
+    <button class="btn" id="btnEq" onclick="setState('eq')">Dynamic Equilibrium</button>
+    <button class="btn active" id="btnRotate" onclick="toggleRotate()">Auto Rotate</button>
+  </div>
+
+  <div class="hint">👆 Drag to Rotate • Pinch to Zoom</div>
+  <div class="watermark">Created by <span>Kunal Ganeshakar</span> | Master Chemistry</div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script>
+    const container = document.getElementById('canvas-container');
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.set(0, 1.8, 7.0);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    container.appendChild(renderer.domElement);
+
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true; controls.dampingFactor = 0.06;
+    controls.autoRotate = true; controls.autoRotateSpeed = 1.0;
+
+    scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+    const d1 = new THREE.DirectionalLight(0xffffff, 0.9); d1.position.set(5, 7, 5); scene.add(d1);
+    const d2 = new THREE.DirectionalLight(0x38bdf8, 0.5); d2.position.set(-5, -4, -5); scene.add(d2);
+
+    const root = new THREE.Group();
+    scene.add(root);
+
+    const sGeo = new THREE.SphereGeometry(1, 24, 24);
+    const oMat = new THREE.MeshStandardMaterial({ color: 0xef4444, emissive: 0x7f1d1d, roughness: 0.25 });
+    const hMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.25 });
+    const pMat = new THREE.MeshStandardMaterial({ color: 0xfacc15, emissive: 0xca8a04, roughness: 0.2 });
+
+    // Left Water (becomes H3O+)
+    const leftW = new THREE.Group();
+    leftW.position.set(-1.35, 0, 0);
+    const o1 = new THREE.Mesh(sGeo, oMat); o1.scale.setScalar(0.38);
+    const h1 = new THREE.Mesh(sGeo, hMat); h1.scale.setScalar(0.19); h1.position.set(-0.34, 0.26, 0.16);
+    const h2 = new THREE.Mesh(sGeo, hMat); h2.scale.setScalar(0.19); h2.position.set(-0.34, -0.26, 0.16);
+    leftW.add(o1, h1, h2);
+    root.add(leftW);
+
+    // Right Water (becomes OH-)
+    const rightW = new THREE.Group();
+    rightW.position.set(1.35, 0, 0);
+    const o2 = new THREE.Mesh(sGeo, oMat); o2.scale.setScalar(0.38);
+    const h3 = new THREE.Mesh(sGeo, hMat); h3.scale.setScalar(0.19); h3.position.set(0.36, -0.24, 0.16);
+    rightW.add(o2, h3);
+    root.add(rightW);
+
+    // Mobile Proton (H+)
+    const proton = new THREE.Mesh(sGeo, pMat);
+    proton.scale.setScalar(0.21);
+    root.add(proton);
+
+    let state = 'mol'; // 'mol' | 'ion' | 'eq'
+    let prog = 0, clock = 0;
+
+    function setState(st) {
+      state = st;
+      document.getElementById('btnMol').classList.toggle('active', st === 'mol');
+      document.getElementById('btnIon').classList.toggle('active', st === 'ion');
+      document.getElementById('btnEq').classList.toggle('active', st === 'eq');
+
+      if (st === 'mol') {
+        document.getElementById('mainTitle').textContent = 'Two Pure Water Molecules (2 H₂O)';
+        document.getElementById('statusText').textContent = 'Neutral H₂O + H₂O (Before Ionization)';
+      } else if (st === 'ion') {
+        document.getElementById('mainTitle').textContent = 'Hydronium (H₃O⁺) + Hydroxide (OH⁻)';
+        document.getElementById('statusText').textContent = 'H⁺ Transferred → H₃O⁺ + OH⁻ Formed';
+      } else {
+        document.getElementById('mainTitle').textContent = 'Dynamic Equilibrium (Kw = 10⁻¹⁴)';
+        document.getElementById('statusText').textContent = 'H₂O + H₂O ⇌ H₃O⁺ + OH⁻ (Continuous)';
+      }
+    }
+
+    function toggleRotate() { controls.autoRotate = !controls.autoRotate; document.getElementById('btnRotate').classList.toggle('active', controls.autoRotate); }
+    function toggleInfo() { document.getElementById('infoPanel').classList.toggle('show'); }
+    window.addEventListener('resize', () => { camera.aspect = window.innerWidth/window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); });
+
+    function animate() {
+      requestAnimationFrame(animate);
+      clock += 0.04;
+
+      let targetP = state === 'mol' ? 0 : (state === 'ion' ? 1 : (Math.sin(clock) + 1) * 0.5);
+      prog += (targetP - prog) * 0.1;
+
+      const pRight = new THREE.Vector3(0.96, 0.22, 0.12);
+      const pLeft = new THREE.Vector3(-0.96, 0.02, -0.15);
+      proton.position.lerpVectors(pRight, pLeft, prog);
+
+      leftW.position.y = Math.sin(clock * 0.8) * 0.07;
+      rightW.position.y = -Math.sin(clock * 0.8) * 0.07;
+
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    animate();
+  </script>
+</body>
+</html>

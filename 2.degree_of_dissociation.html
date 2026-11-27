@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Degree of Dissociation - Master Chemistry</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; }
+    body { background: radial-gradient(circle at top, #1e1b4b 0%, #090d16 100%); color: #f8fafc; overflow: hidden; height: 100vh; width: 100vw; user-select: none; }
+    #canvas-container { width: 100%; height: 100%; display: block; }
+    .top-bar { position: fixed; top: 12px; left: 12px; right: 12px; display: flex; justify-content: space-between; align-items: center; pointer-events: none; z-index: 10; }
+    .title-box { background: rgba(15,23,42,0.78); backdrop-filter: blur(8px); border: 1px solid rgba(167,139,250,0.45); padding: 8px 14px; border-radius: 12px; pointer-events: auto; }
+    .title-box h1 { font-size: 15px; font-weight: 700; color: #a78bfa; }
+    .title-box p { font-size: 11px; color: #cbd5e1; margin-top: 2px; }
+    .info-btn { background: rgba(167,139,250,0.2); border: 1px solid #a78bfa; color: #ede9fe; padding: 8px 12px; border-radius: 10px; font-size: 12px; font-weight: 600; cursor: pointer; pointer-events: auto; }
+    .legend { position: fixed; top: 72px; left: 12px; background: rgba(15,23,42,0.78); backdrop-filter: blur(6px); border: 1px solid rgba(148,163,184,0.25); border-radius: 10px; padding: 7px 11px; font-size: 11px; color: #e2e8f0; z-index: 10; pointer-events: none; display: flex; flex-direction: column; gap: 4px; }
+    .legend-item { display: flex; align-items: center; gap: 6px; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+    .dot-a { background: #38bdf8; }
+    .dot-b { background: #fb7185; }
+    .status-badge { margin-top: 3px; padding-top: 4px; border-top: 1px solid rgba(148,163,184,0.2); font-size: 10.5px; color: #34d399; font-weight: 600; }
+    .info-panel { position: fixed; top: 72px; right: 12px; width: 285px; max-width: calc(100vw - 24px); background: rgba(15,23,42,0.94); backdrop-filter: blur(10px); border: 1px solid rgba(167,139,250,0.45); border-radius: 14px; padding: 12px 14px; z-index: 15; display: none; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+    .info-panel.show { display: block; }
+    .info-panel h2 { font-size: 13px; color: #a78bfa; margin-bottom: 8px; border-bottom: 1px solid rgba(148,163,184,0.25); padding-bottom: 5px; }
+    .info-panel ul { list-style: none; font-size: 11.8px; line-height: 1.65; color: #e2e8f0; }
+    .info-panel li strong { color: #fbbf24; }
+    .controls { position: fixed; bottom: 42px; left: 50%; transform: translateX(-50%); display: flex; gap: 7px; background: rgba(15,23,42,0.85); backdrop-filter: blur(8px); border: 1px solid rgba(148,163,184,0.25); padding: 8px 10px; border-radius: 14px; z-index: 10; flex-wrap: nowrap; max-width: calc(100vw - 16px); overflow-x: auto; }
+    .btn { background: #1e293b; color: #e2e8f0; border: 1px solid #334155; padding: 7px 10px; border-radius: 9px; font-size: 11.5px; font-weight: 600; white-space: nowrap; cursor: pointer; transition: 0.2s; }
+    .btn.active { background: #7c3aed; border-color: #a78bfa; color: #fff; }
+    .watermark { position: fixed; bottom: 10px; right: 12px; font-size: 11px; font-weight: 600; color: rgba(226,232,240,0.75); background: rgba(15,23,42,0.65); padding: 4px 10px; border-radius: 8px; border: 1px solid rgba(148,163,184,0.2); z-index: 10; pointer-events: none; }
+    .watermark span { color: #a78bfa; }
+    .hint { position: fixed; bottom: 12px; left: 12px; font-size: 10px; color: rgba(148,163,184,0.8); z-index: 10; pointer-events: none; }
+  </style>
+</head>
+<body>
+  <div class="top-bar">
+    <div class="title-box">
+      <h1 id="mainTitle">Weak Electrolyte (α = 0.25)</h1>
+      <p>12th HSC • Ch 3: Ionic Equilibria (3D Model)</p>
+    </div>
+    <button class="info-btn" onclick="toggleInfo()">ℹ️ Notes</button>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><span class="dot dot-a"></span> Cation (A⁺)</div>
+    <div class="legend-item"><span class="dot dot-b"></span> Anion (B⁻)</div>
+    <div class="status-badge" id="statusText">3 of 12 Dissociated | % Dissociation = 25%</div>
+  </div>
+
+  <div class="info-panel" id="infoPanel">
+    <h2>📌 Degree of Dissociation (α)</h2>
+    <ul>
+      <li>• <strong>Definition:</strong> Fraction of total moles of electrolyte that dissociate into ions at equilibrium.</li>
+      <li>• <strong>Formula:</strong> <strong>α = (Moles dissociated) / (Total moles)</strong></li>
+      <li>• <strong>Percent Dissociation:</strong> % Dissociation = α × 100</li>
+      <li>• <strong>Values:</strong> Strong (α ≈ 1), Weak (0 &lt; α &lt; 1), Non-electrolyte (α = 0).</li>
+    </ul>
+  </div>
+
+  <div id="canvas-container"></div>
+
+  <div class="controls">
+    <button class="btn" id="btnZero" onclick="setAlpha(0)">α = 0 (0%)</button>
+    <button class="btn active" id="btnWeak" onclick="setAlpha(0.25)">Weak (α = 0.25)</button>
+    <button class="btn" id="btnStrong" onclick="setAlpha(1)">Strong (α = 1.0)</button>
+    <button class="btn active" id="btnRotate" onclick="toggleRotate()">Auto Rotate</button>
+  </div>
+
+  <div class="hint">👆 Drag to Rotate • Pinch to Zoom</div>
+  <div class="watermark">Created by <span>Kunal Ganeshakar</span> | Master Chemistry</div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script>
+    const container = document.getElementById('canvas-container');
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.set(0, 2.2, 7.6);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    container.appendChild(renderer.domElement);
+
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true; controls.dampingFactor = 0.06;
+    controls.autoRotate = true; controls.autoRotateSpeed = 1.0;
+
+    scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+    const d1 = new THREE.DirectionalLight(0xffffff, 0.9); d1.position.set(6, 8, 6); scene.add(d1);
+    const d2 = new THREE.DirectionalLight(0xa78bfa, 0.5); d2.position.set(-6, -4, -6); scene.add(d2);
+
+    const root = new THREE.Group();
+    scene.add(root);
+
+    const boxSize = 3.6;
+    root.add(new THREE.LineSegments(
+      new THREE.EdgesGeometry(new THREE.BoxGeometry(boxSize, boxSize, boxSize)),
+      new THREE.LineBasicMaterial({ color: 0xa78bfa, transparent: true, opacity: 0.45 })
+    ));
+
+    // 12 AB Molecule Pairs
+    const sGeo = new THREE.SphereGeometry(0.16, 18, 18);
+    const matA = new THREE.MeshStandardMaterial({ color: 0x38bdf8, emissive: 0x0369a1, roughness: 0.25 });
+    const matB = new THREE.MeshStandardMaterial({ color: 0xfb7185, emissive: 0x9f1239, roughness: 0.25 });
+    const bondMat = new THREE.LineBasicMaterial({ color: 0xf8fafc, transparent: true, opacity: 0.8 });
+
+    const pairs = [];
+    for (let i = 0; i < 12; i++) {
+      const mA = new THREE.Mesh(sGeo, matA);
+      const mB = new THREE.Mesh(sGeo, matB);
+      const center = new THREE.Vector3((Math.random()-0.5)*2.6, (Math.random()-0.5)*2.6, (Math.random()-0.5)*2.6);
+      root.add(mA, mB);
+
+      const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]), bondMat);
+      root.add(line);
+
+      pairs.push({
+        idx: i, mA, mB, line, center,
+        vel: new THREE.Vector3((Math.random()-0.5)*0.02, (Math.random()-0.5)*0.02, (Math.random()-0.5)*0.02),
+        dir: new THREE.Vector3(Math.random()-0.5, Math.random()-0.5, Math.random()-0.5).normalize(),
+        sep: 0.16
+      });
+    }
+
+    let alpha = 0.25;
+    function setAlpha(val) {
+      alpha = val;
+      document.getElementById('btnZero').classList.toggle('active', val === 0);
+      document.getElementById('btnWeak').classList.toggle('active', val === 0.25);
+      document.getElementById('btnStrong').classList.toggle('active', val === 1);
+
+      if (val === 0) {
+        document.getElementById('mainTitle').textContent = 'Non-Electrolyte (α = 0)';
+        document.getElementById('statusText').textContent = '0 of 12 Dissociated | % Dissociation = 0%';
+        document.getElementById('statusText').style.color = '#94a3b8';
+      } else if (val === 0.25) {
+        document.getElementById('mainTitle').textContent = 'Weak Electrolyte (α = 0.25)';
+        document.getElementById('statusText').textContent = '3 of 12 Dissociated | % Dissociation = 25%';
+        document.getElementById('statusText').style.color = '#fbbf24';
+      } else {
+        document.getElementById('mainTitle').textContent = 'Strong Electrolyte (α = 1.0)';
+        document.getElementById('statusText').textContent = '12 of 12 Dissociated | % Dissociation = 100%';
+        document.getElementById('statusText').style.color = '#34d399';
+      }
+    }
+
+    function toggleRotate() { controls.autoRotate = !controls.autoRotate; document.getElementById('btnRotate').classList.toggle('active', controls.autoRotate); }
+    function toggleInfo() { document.getElementById('infoPanel').classList.toggle('show'); }
+    window.addEventListener('resize', () => { camera.aspect = window.innerWidth/window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); });
+
+    function animate() {
+      requestAnimationFrame(animate);
+      const dissociatedCount = Math.round(alpha * 12);
+      const lim = boxSize / 2 - 0.35;
+
+      pairs.forEach(p => {
+        const isSplit = p.idx < dissociatedCount;
+        const targetSep = isSplit ? 0.65 : 0.16;
+        p.sep += (targetSep - p.sep) * 0.08;
+
+        p.center.add(p.vel);
+        if (Math.abs(p.center.x) > lim) p.vel.x *= -1;
+        if (Math.abs(p.center.y) > lim) p.vel.y *= -1;
+        if (Math.abs(p.center.z) > lim) p.vel.z *= -1;
+
+        p.mA.position.copy(p.center).addScaledVector(p.dir, p.sep);
+        p.mB.position.copy(p.center).addScaledVector(p.dir, -p.sep);
+
+        p.line.visible = !isSplit;
+        if (!isSplit) {
+          const pos = p.line.geometry.attributes.position;
+          pos.setXYZ(0, p.mA.position.x, p.mA.position.y, p.mA.position.z);
+          pos.setXYZ(1, p.mB.position.x, p.mB.position.y, p.mB.position.z);
+          pos.needsUpdate = true;
+        }
+      });
+
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    animate();
+  </script>
+</body>
+</html>
