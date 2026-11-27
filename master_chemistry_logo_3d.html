@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Master Chemistry - 3D Logo</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; }
+    body {
+      background: radial-gradient(circle at center, #0c2442 0%, #050811 100%);
+      color: #f8fafc;
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+      user-select: none;
+    }
+    #canvas-container { width: 100%; height: 100%; display: block; }
+    .top-bar {
+      position: fixed; top: 14px; left: 14px; right: 14px;
+      display: flex; justify-content: center; pointer-events: none; z-index: 10;
+    }
+    .title-box {
+      background: rgba(15, 23, 42, 0.72); backdrop-filter: blur(8px);
+      border: 1px solid rgba(56, 189, 248, 0.45);
+      padding: 8px 18px; border-radius: 14px; text-align: center;
+      box-shadow: 0 0 20px rgba(56, 189, 248, 0.2);
+    }
+    .title-box h1 { font-size: 16px; font-weight: 700; color: #38bdf8; letter-spacing: 0.5px; }
+    .title-box p { font-size: 11px; color: #cbd5e1; margin-top: 2px; }
+    .controls {
+      position: fixed; bottom: 42px; left: 50%; transform: translateX(-50%);
+      display: flex; gap: 8px; background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(8px); border: 1px solid rgba(148, 163, 184, 0.25);
+      padding: 8px 10px; border-radius: 14px; z-index: 10;
+      max-width: calc(100vw - 16px); overflow-x: auto;
+    }
+    .btn {
+      background: #1e293b; color: #e2e8f0; border: 1px solid #334155;
+      padding: 7px 12px; border-radius: 9px; font-size: 12px;
+      font-weight: 600; white-space: nowrap; cursor: pointer; transition: 0.2s;
+    }
+    .btn.active { background: #0284c7; border-color: #38bdf8; color: #ffffff; }
+    .watermark {
+      position: fixed; bottom: 10px; right: 12px; font-size: 11px; font-weight: 600;
+      color: rgba(226, 232, 240, 0.75); background: rgba(15, 23, 42, 0.65);
+      padding: 4px 10px; border-radius: 8px; border: 1px solid rgba(148, 163, 184, 0.2);
+      z-index: 10; pointer-events: none;
+    }
+    .watermark span { color: #38bdf8; }
+    .hint {
+      position: fixed; bottom: 12px; left: 12px; font-size: 10px;
+      color: rgba(148, 163, 184, 0.8); z-index: 10; pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="top-bar">
+    <div class="title-box">
+      <h1>Master Chemistry 3D</h1>
+      <p>Interactive 3D Brand Logo • Kunal Ganeshakar</p>
+    </div>
+  </div>
+
+  <div id="canvas-container"></div>
+
+  <div class="controls">
+    <button class="btn active" id="btnCoin" onclick="setShape('coin')">3D Coin</button>
+    <button class="btn" id="btnCube" onclick="setShape('cube')">3D Cube</button>
+    <button class="btn active" id="btnRotate" onclick="toggleRotate()">Auto Rotate</button>
+  </div>
+
+  <div class="hint">👆 Drag to Rotate • Pinch to Zoom</div>
+  <div class="watermark">Created by <span>Kunal Ganeshakar</span> | Master Chemistry</div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+  <script>
+    const container = document.getElementById('canvas-container');
+    const scene = new THREE.Scene();
+
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.set(0, 0.6, 5.6);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    container.appendChild(renderer.domElement);
+
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.06;
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = 2.0;
+    controls.minDistance = 3.0;
+    controls.maxDistance = 10.0;
+
+    // Lighting
+    scene.add(new THREE.AmbientLight(0xffffff, 0.85));
+    const d1 = new THREE.DirectionalLight(0xffffff, 1.0);
+    d1.position.set(5, 6, 5);
+    scene.add(d1);
+    const d2 = new THREE.DirectionalLight(0x38bdf8, 0.8);
+    d2.position.set(-5, -4, -5);
+    scene.add(d2);
+
+    const rootGroup = new THREE.Group();
+    scene.add(rootGroup);
+
+    // Load Logo Texture
+    const textureLoader = new THREE.TextureLoader();
+    const logoTex = textureLoader.load('Mmmfg.png');
+
+    // Materials
+    const faceMat = new THREE.MeshStandardMaterial({
+      map: logoTex,
+      roughness: 0.25,
+      metalness: 0.2
+    });
+    const rimMat = new THREE.MeshStandardMaterial({
+      color: 0x38bdf8,
+      emissive: 0x0284c7,
+      emissiveIntensity: 0.45,
+      roughness: 0.2,
+      metalness: 0.85
+    });
+
+    // 1. 3D Coin / Medallion
+    const coinGroup = new THREE.Group();
+    const coinGeo = new THREE.CylinderGeometry(1.65, 1.65, 0.26, 64);
+    coinGeo.rotateX(Math.PI / 2);
+    const coinMesh = new THREE.Mesh(coinGeo, [rimMat, faceMat, faceMat]);
+    coinGroup.add(coinMesh);
+
+    // Glowing Outer Ring around Coin
+    const ringMesh = new THREE.Mesh(
+      new THREE.TorusGeometry(1.78, 0.035, 16, 64),
+      new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.75 })
+    );
+    coinGroup.add(ringMesh);
+    rootGroup.add(coinGroup);
+
+    // 2. 3D Cube
+    const cubeMesh = new THREE.Mesh(
+      new THREE.BoxGeometry(2.3, 2.3, 2.3),
+      faceMat
+    );
+    cubeMesh.visible = false;
+    rootGroup.add(cubeMesh);
+
+    // Orbiting Glowing Chemistry Particles
+    const particleGroup = new THREE.Group();
+    const pGeo = new THREE.SphereGeometry(0.055, 12, 12);
+    const pMat1 = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
+    const pMat2 = new THREE.MeshBasicMaterial({ color: 0xfb923c });
+
+    for (let i = 0; i < 28; i++) {
+      const m = new THREE.Mesh(pGeo, i % 3 === 0 ? pMat2 : pMat1);
+      const angle = (i / 28) * Math.PI * 2;
+      const radius = 2.25 + (i % 3) * 0.35;
+      const y = ((i % 5) - 2) * 0.45;
+      m.position.set(Math.cos(angle) * radius, y, Math.sin(angle) * radius);
+      particleGroup.add(m);
+    }
+    rootGroup.add(particleGroup);
+
+    function setShape(shape) {
+      const isCoin = (shape === 'coin');
+      coinGroup.visible = isCoin;
+      cubeMesh.visible = !isCoin;
+      document.getElementById('btnCoin').classList.toggle('active', isCoin);
+      document.getElementById('btnCube').classList.toggle('active', !isCoin);
+    }
+
+    function toggleRotate() {
+      controls.autoRotate = !controls.autoRotate;
+      document.getElementById('btnRotate').classList.toggle('active', controls.autoRotate);
+    }
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    let clock = 0;
+    function animate() {
+      requestAnimationFrame(animate);
+      clock += 0.02;
+
+      rootGroup.position.y = Math.sin(clock * 1.5) * 0.12;
+      particleGroup.rotation.y += 0.008;
+      particleGroup.rotation.x = Math.sin(clock * 0.5) * 0.25;
+
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    animate();
+  </script>
+</body>
+</html>
