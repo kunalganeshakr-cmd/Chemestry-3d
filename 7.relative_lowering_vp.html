@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Relative Lowering of Vapour Pressure - Master Chemistry</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; }
+    body {
+      background: radial-gradient(circle at top, #0f2942 0%, #090d16 100%);
+      color: #f8fafc;
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+      user-select: none;
+    }
+    #canvas-container {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    .top-bar {
+      position: fixed;
+      top: 12px;
+      left: 12px;
+      right: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      pointer-events: none;
+      z-index: 10;
+    }
+    .title-box {
+      background: rgba(15, 23, 42, 0.78);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(56, 189, 248, 0.45);
+      padding: 8px 14px;
+      border-radius: 12px;
+      pointer-events: auto;
+    }
+    .title-box h1 {
+      font-size: 15px;
+      font-weight: 700;
+      color: #38bdf8;
+      letter-spacing: 0.3px;
+    }
+    .title-box p {
+      font-size: 11px;
+      color: #cbd5e1;
+      margin-top: 2px;
+    }
+    .info-btn {
+      background: rgba(56, 189, 248, 0.2);
+      border: 1px solid #38bdf8;
+      color: #e0f2fe;
+      padding: 8px 12px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      pointer-events: auto;
+    }
+    .legend {
+      position: fixed;
+      top: 72px;
+      left: 12px;
+      background: rgba(15, 23, 42, 0.78);
+      backdrop-filter: blur(6px);
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      border-radius: 10px;
+      padding: 7px 11px;
+      font-size: 11px;
+      color: #e2e8f0;
+      z-index: 10;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .legend-item { display: flex; align-items: center; gap: 6px; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+    .dot-solv { background: #38bdf8; }
+    .dot-solu { background: #f97316; }
+    .dot-vap { background: #e0f2fe; box-shadow: 0 0 6px #38bdf8; }
+    .status-badge {
+      margin-top: 3px;
+      padding-top: 4px;
+      border-top: 1px solid rgba(148, 163, 184, 0.2);
+      font-size: 10.5px;
+      color: #34d399;
+      font-weight: 600;
+    }
+    .info-panel {
+      position: fixed;
+      top: 72px;
+      right: 12px;
+      width: 285px;
+      max-width: calc(100vw - 24px);
+      background: rgba(15, 23, 42, 0.94);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(56, 189, 248, 0.45);
+      border-radius: 14px;
+      padding: 12px 14px;
+      z-index: 15;
+      display: none;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    }
+    .info-panel.show { display: block; }
+    .info-panel h2 {
+      font-size: 13px;
+      color: #38bdf8;
+      margin-bottom: 8px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+      padding-bottom: 5px;
+    }
+    .info-panel ul {
+      list-style: none;
+      font-size: 11.8px;
+      line-height: 1.65;
+      color: #e2e8f0;
+    }
+    .info-panel li strong { color: #fbbf24; }
+    .controls {
+      position: fixed;
+      bottom: 42px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 7px;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      padding: 8px 10px;
+      border-radius: 14px;
+      z-index: 10;
+      flex-wrap: nowrap;
+      max-width: calc(100vw - 16px);
+      overflow-x: auto;
+    }
+    .btn {
+      background: #1e293b;
+      color: #e2e8f0;
+      border: 1px solid #334155;
+      padding: 7px 11px;
+      border-radius: 9px;
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .btn.active {
+      background: #0284c7;
+      border-color: #38bdf8;
+      color: #ffffff;
+    }
+    .watermark {
+      position: fixed;
+      bottom: 10px;
+      right: 12px;
+      font-size: 11px;
+      font-weight: 600;
+      color: rgba(226, 232, 240, 0.75);
+      background: rgba(15, 23, 42, 0.65);
+      padding: 4px 10px;
+      border-radius: 8px;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      z-index: 10;
+      pointer-events: none;
+    }
+    .watermark span { color: #38bdf8; }
+    .hint {
+      position: fixed;
+      bottom: 12px;
+      left: 12px;
+      font-size: 10px;
+      color: rgba(148, 163, 184, 0.8);
+      z-index: 10;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="top-bar">
+    <div class="title-box">
+      <h1 id="mainTitle">Pure Solvent (x₂ = 0)</h1>
+      <p>12th HSC • Ch 2: Solutions (3D Model)</p>
+    </div>
+    <button class="info-btn" onclick="toggleInfo()">ℹ️ Notes</button>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><span class="dot dot-solv"></span> Solvent Molecule</div>
+    <div class="legend-item"><span class="dot dot-solu"></span> Non-volatile Solute</div>
+    <div class="legend-item"><span class="dot dot-vap"></span> Vapour Molecule</div>
+    <div class="status-badge" id="statusText">ΔP / P₁° = 0.00 | V.P. = 100% P₁°</div>
+  </div>
+
+  <div class="info-panel" id="infoPanel">
+    <h2>📌 Relative Lowering of V.P.</h2>
+    <ul>
+      <li>• <strong>Colligative Property:</strong> Depends only on the number of solute particles, not their nature.</li>
+      <li>• <strong>Formula:</strong> <strong>(P₁° − P₁) / P₁° = x₂</strong></li>
+      <li>• <strong>Molar Mass (M₂):</strong> ΔP / P₁° = (W₂ · M₁) / (M₂ · W₁)</li>
+      <li>• <strong>Mechanism:</strong> Adding more non-volatile solute covers more surface area, proportionally reducing evaporation.</li>
+    </ul>
+  </div>
+
+  <div id="canvas-container"></div>
+
+  <div class="controls">
+    <button class="btn active" id="btnPure" onclick="setConc(0)">Pure (x₂=0)</button>
+    <button class="btn" id="btnDil" onclick="setConc(1)">Dilute (x₂=0.25)</button>
+    <button class="btn" id="btnConc" onclick="setConc(2)">Conc. (x₂=0.50)</button>
+    <button class="btn active" id="btnRotate" onclick="toggleRotate()">Auto Rotate</button>
+  </div>
+
+  <div class="hint">👆 Drag to Rotate • Pinch to Zoom</div>
+  <div class="watermark">Created by <span>Kunal Ganeshakar</span> | Master Chemistry</div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+  <script>
+    const container = document.getElementById('canvas-container');
+    const scene = new THREE.Scene();
+
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.set(0.6, 2.3, 7.8);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    container.appendChild(renderer.domElement);
+
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.06;
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = 1.0;
+    controls.minDistance = 4;
+    controls.maxDistance = 14;
+
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.65);
+    scene.add(ambientLight);
+
+    const dirLight1 = new THREE.DirectionalLight(0xffffff, 0.9);
+    dirLight1.position.set(6, 8, 6);
+    scene.add(dirLight1);
+
+    const dirLight2 = new THREE.DirectionalLight(0x38bdf8, 0.5);
+    dirLight2.position.set(-6, -4, -6);
+    scene.add(dirLight2);
+
+    const rootGroup = new THREE.Group();
+    scene.add(rootGroup);
+
+    const cylR = 1.55;
+    const cylH = 4.2;
+    const bottomY = -2.1;
+    const topY = 2.1;
+    const liquidTopY = -0.35;
+
+    // Main Chamber shifted slightly left to make room for pressure gauge bar on right
+    const chamberGroup = new THREE.Group();
+    chamberGroup.position.x = -0.45;
+    rootGroup.add(chamberGroup);
+
+    const glassCyl = new THREE.Mesh(
+      new THREE.CylinderGeometry(cylR, cylR, cylH, 36, 1, true),
+      new THREE.MeshPhysicalMaterial({
+        color: 0x93c5fd,
+        transparent: true,
+        opacity: 0.16,
+        roughness: 0.1,
+        side: THREE.DoubleSide,
+        depthWrite: false
+      })
+    );
+    chamberGroup.add(glassCyl);
+
+    const capMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.35, metalness: 0.65 });
+    const baseCap = new THREE.Mesh(new THREE.CylinderGeometry(cylR + 0.06, cylR + 0.06, 0.14, 36), capMat);
+    baseCap.position.y = bottomY - 0.07;
+    chamberGroup.add(baseCap);
+
+    const topCap = new THREE.Mesh(new THREE.CylinderGeometry(cylR + 0.06, cylR + 0.06, 0.14, 36), capMat);
+    topCap.position.y = topY + 0.07;
+    chamberGroup.add(topCap);
+
+    // Liquid Volume
+    const liquidH = liquidTopY - bottomY;
+    const liquidMesh = new THREE.Mesh(
+      new THREE.CylinderGeometry(cylR - 0.04, cylR - 0.04, liquidH, 36),
+      new THREE.MeshPhysicalMaterial({
+        color: 0x0284c7,
+        transparent: true,
+        opacity: 0.28,
+        roughness: 0.15,
+        depthWrite: false
+      })
+    );
+    liquidMesh.position.y = bottomY + liquidH / 2;
+    chamberGroup.add(liquidMesh);
+
+    // 3D Pressure Gauge Tube on the right side
+    const gaugeGroup = new THREE.Group();
+    gaugeGroup.position.set(1.75, 0, 0);
+    rootGroup.add(gaugeGroup);
+
+    const gaugeTube = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.22, 0.22, 3.6, 20, 1, true),
+      new THREE.MeshPhysicalMaterial({ color: 0xcbd5e1, transparent: true, opacity: 0.22, side: THREE.DoubleSide, depthWrite: false })
+    );
+    gaugeGroup.add(gaugeTube);
+
+    const gaugeBase = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.14, 20), capMat);
+    gaugeBase.position.y = -1.87;
+    gaugeGroup.add(gaugeBase);
+
+    const mercuryMat = new THREE.MeshStandardMaterial({ color: 0x34d399, emissive: 0x065f46, roughness: 0.2, metalness: 0.4 });
+    const mercuryCol = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 1.0, 20), mercuryMat);
+    gaugeGroup.add(mercuryCol);
+
+    // Connector Pipe
+    const pipe = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.08, 0.08, 0.75, 14),
+      capMat
+    );
+    pipe.rotation.z = Math.PI / 2;
+    pipe.position.set(1.38, 1.4, 0);
+    rootGroup.add(pipe);
+
+    // Surface Particles (20 slots)
+    const sphereGeo = new THREE.SphereGeometry(0.15, 18, 18);
+    const solventMat = new THREE.MeshStandardMaterial({ color: 0x38bdf8, roughness: 0.25, metalness: 0.2 });
+    const soluteMat = new THREE.MeshStandardMaterial({ color: 0xf97316, emissive: 0x7c2d12, roughness: 0.25, metalness: 0.2 });
+
+    const surfaceParticles = [];
+    const rings = [
+      { r: 0, count: 1 },
+      { r: 0.52, count: 7 },
+      { r: 1.06, count: 12 }
+    ];
+
+    rings.forEach(ring => {
+      for (let i = 0; i < ring.count; i++) {
+        const angle = (i / ring.count) * Math.PI * 2;
+        const x = ring.r * Math.cos(angle);
+        const z = ring.r * Math.sin(angle);
+        const mesh = new THREE.Mesh(sphereGeo, solventMat);
+        mesh.position.set(x, liquidTopY - 0.04, z);
+        chamberGroup.add(mesh);
+        surfaceParticles.push({ mesh, baseY: liquidTopY - 0.04, phase: Math.random() * Math.PI * 2 });
+      }
+    });
+
+    // Vapour Molecules (28 total)
+    const vapGeo = new THREE.SphereGeometry(0.105, 16, 16);
+    const vapMat = new THREE.MeshStandardMaterial({ color: 0xe0f2fe, emissive: 0x0284c7, roughness: 0.2 });
+    const vapours = [];
+    for (let i = 0; i < 28; i++) {
+      const mesh = new THREE.Mesh(vapGeo, vapMat);
+      const angle = Math.random() * Math.PI * 2;
+      const r = Math.sqrt(Math.random()) * (cylR - 0.24);
+      const y = liquidTopY + 0.25 + Math.random() * (topY - liquidTopY - 0.45);
+      mesh.position.set(r * Math.cos(angle), y, r * Math.sin(angle));
+      chamberGroup.add(mesh);
+
+      vapours.push({
+        mesh,
+        index: i,
+        vel: new THREE.Vector3(
+          (Math.random() - 0.5) * 0.055,
+          (Math.random() - 0.5) * 0.055,
+          (Math.random() - 0.5) * 0.055
+        )
+      });
+    }
+
+    let level = 0; // 0 = Pure, 1 = Dilute (25%), 2 = Conc (50%)
+    let currentGaugeH = 3.2;
+    let clock = 0;
+
+    function setConc(lv) {
+      level = lv;
+      document.getElementById('btnPure').classList.toggle('active', lv === 0);
+      document.getElementById('btnDil').classList.toggle('active', lv === 1);
+      document.getElementById('btnConc').classList.toggle('active', lv === 2);
+
+      const soluteCount = lv === 0 ? 0 : (lv === 1 ? 5 : 10);
+      surfaceParticles.forEach((p, idx) => {
+        // Spread solute evenly across indices
+        const isSolute = (lv === 1 && idx % 4 === 0) || (lv === 2 && idx % 2 === 0);
+        p.mesh.material = isSolute ? soluteMat : solventMat;
+        p.mesh.scale.setScalar(isSolute ? 1.15 : 1.0);
+      });
+
+      if (lv === 0) {
+        document.getElementById('mainTitle').textContent = 'Pure Solvent (x₂ = 0)';
+        document.getElementById('statusText').textContent = 'ΔP / P₁° = 0.00 | V.P. = 100% P₁°';
+        document.getElementById('statusText').style.color = '#34d399';
+        mercuryMat.color.setHex(0x34d399);
+      } else if (lv === 1) {
+        document.getElementById('mainTitle').textContent = 'Dilute Solution (x₂ = 0.25)';
+        document.getElementById('statusText').textContent = 'ΔP / P₁° = 0.25 | V.P. = 75% P₁°';
+        document.getElementById('statusText').style.color = '#fbbf24';
+        mercuryMat.color.setHex(0xfbbf24);
+      } else {
+        document.getElementById('mainTitle').textContent = 'Concentrated Solution (x₂ = 0.50)';
+        document.getElementById('statusText').textContent = 'ΔP / P₁° = 0.50 | V.P. = 50% P₁°';
+        document.getElementById('statusText').style.color = '#fb923c';
+        mercuryMat.color.setHex(0xf97316);
+      }
+    }
+
+    function toggleRotate() {
+      controls.autoRotate = !controls.autoRotate;
+      document.getElementById('btnRotate').classList.toggle('active', controls.autoRotate);
+    }
+
+    function toggleInfo() {
+      document.getElementById('infoPanel').classList.toggle('show');
+    }
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    function animate() {
+      requestAnimationFrame(animate);
+      clock += 0.05;
+
+      // Animate pressure gauge column
+      const targetGaugeH = level === 0 ? 3.2 : (level === 1 ? 2.4 : 1.6);
+      currentGaugeH += (targetGaugeH - currentGaugeH) * 0.1;
+      mercuryCol.scale.y = currentGaugeH;
+      mercuryCol.position.y = -1.8 + currentGaugeH / 2;
+
+      surfaceParticles.forEach(p => {
+        p.mesh.position.y = p.baseY + Math.sin(clock + p.phase) * 0.03;
+      });
+
+      const activeVapours = level === 0 ? 28 : (level === 1 ? 21 : 14);
+      const maxR = cylR - 0.2;
+
+      vapours.forEach(v => {
+        v.mesh.visible = (v.index < activeVapours);
+        if (!v.mesh.visible) return;
+
+        v.mesh.position.add(v.vel);
+        const rSq = v.mesh.position.x * v.mesh.position.x + v.mesh.position.z * v.mesh.position.z;
+        if (rSq > maxR * maxR) {
+          const r = Math.sqrt(rSq);
+          const nx = v.mesh.position.x / r;
+          const nz = v.mesh.position.z / r;
+          const dot = v.vel.x * nx + v.vel.z * nz;
+          v.vel.x -= 2 * dot * nx;
+          v.vel.z -= 2 * dot * nz;
+          v.mesh.position.x = nx * maxR;
+          v.mesh.position.z = nz * maxR;
+        }
+        if (v.mesh.position.y > topY - 0.16) {
+          v.mesh.position.y = topY - 0.16;
+          v.vel.y = -Math.abs(v.vel.y);
+        } else if (v.mesh.position.y < liquidTopY + 0.18) {
+          v.mesh.position.y = liquidTopY + 0.18;
+          v.vel.y = Math.abs(v.vel.y);
+        }
+      });
+
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    animate();
+  </script>
+</body>
+</html>

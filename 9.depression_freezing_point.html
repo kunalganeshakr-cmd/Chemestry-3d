@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Depression in Freezing Point - Master Chemistry</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; }
+    body {
+      background: radial-gradient(circle at top, #0c2d48 0%, #090d16 100%);
+      color: #f8fafc;
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+      user-select: none;
+    }
+    #canvas-container { width: 100%; height: 100%; display: block; }
+    .top-bar {
+      position: fixed; top: 12px; left: 12px; right: 12px;
+      display: flex; justify-content: space-between; align-items: center;
+      pointer-events: none; z-index: 10;
+    }
+    .title-box {
+      background: rgba(15, 23, 42, 0.78); backdrop-filter: blur(8px);
+      border: 1px solid rgba(125, 211, 252, 0.45);
+      padding: 8px 14px; border-radius: 12px; pointer-events: auto;
+    }
+    .title-box h1 { font-size: 15px; font-weight: 700; color: #7dd3fc; letter-spacing: 0.3px; }
+    .title-box p { font-size: 11px; color: #cbd5e1; margin-top: 2px; }
+    .info-btn {
+      background: rgba(125, 211, 252, 0.2); border: 1px solid #7dd3fc;
+      color: #e0f2fe; padding: 8px 12px; border-radius: 10px;
+      font-size: 12px; font-weight: 600; cursor: pointer; pointer-events: auto;
+    }
+    .legend {
+      position: fixed; top: 72px; left: 12px;
+      background: rgba(15, 23, 42, 0.78); backdrop-filter: blur(6px);
+      border: 1px solid rgba(148, 163, 184, 0.25); border-radius: 10px;
+      padding: 7px 11px; font-size: 11px; color: #e2e8f0; z-index: 10;
+      pointer-events: none; display: flex; flex-direction: column; gap: 4px;
+    }
+    .legend-item { display: flex; align-items: center; gap: 6px; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+    .dot-solv { background: #7dd3fc; }
+    .dot-solu { background: #f97316; }
+    .status-badge {
+      margin-top: 3px; padding-top: 4px;
+      border-top: 1px solid rgba(148, 163, 184, 0.2);
+      font-size: 10.5px; color: #38bdf8; font-weight: 600;
+    }
+    .info-panel {
+      position: fixed; top: 72px; right: 12px; width: 285px;
+      max-width: calc(100vw - 24px); background: rgba(15, 23, 42, 0.94);
+      backdrop-filter: blur(10px); border: 1px solid rgba(125, 211, 252, 0.45);
+      border-radius: 14px; padding: 12px 14px; z-index: 15; display: none;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    }
+    .info-panel.show { display: block; }
+    .info-panel h2 {
+      font-size: 13px; color: #7dd3fc; margin-bottom: 8px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.25); padding-bottom: 5px;
+    }
+    .info-panel ul { list-style: none; font-size: 11.8px; line-height: 1.65; color: #e2e8f0; }
+    .info-panel li strong { color: #fbbf24; }
+    .controls {
+      position: fixed; bottom: 42px; left: 50%; transform: translateX(-50%);
+      display: flex; gap: 7px; background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(8px); border: 1px solid rgba(148, 163, 184, 0.25);
+      padding: 8px 10px; border-radius: 14px; z-index: 10;
+      flex-wrap: nowrap; max-width: calc(100vw - 16px); overflow-x: auto;
+    }
+    .btn {
+      background: #1e293b; color: #e2e8f0; border: 1px solid #334155;
+      padding: 7px 10px; border-radius: 9px; font-size: 11.5px;
+      font-weight: 600; white-space: nowrap; cursor: pointer; transition: 0.2s;
+    }
+    .btn.active { background: #0284c7; border-color: #7dd3fc; color: #ffffff; }
+    .watermark {
+      position: fixed; bottom: 10px; right: 12px; font-size: 11px; font-weight: 600;
+      color: rgba(226, 232, 240, 0.75); background: rgba(15, 23, 42, 0.65);
+      padding: 4px 10px; border-radius: 8px; border: 1px solid rgba(148, 163, 184, 0.2);
+      z-index: 10; pointer-events: none;
+    }
+    .watermark span { color: #7dd3fc; }
+    .hint {
+      position: fixed; bottom: 12px; left: 12px; font-size: 10px;
+      color: rgba(148, 163, 184, 0.8); z-index: 10; pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="top-bar">
+    <div class="title-box">
+      <h1 id="mainTitle">Pure Water Freezing (0°C)</h1>
+      <p>12th HSC • Ch 2: Solutions (3D Model)</p>
+    </div>
+    <button class="info-btn" onclick="toggleInfo()">ℹ️ Notes</button>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><span class="dot dot-solv"></span> Solvent (H₂O Molecules)</div>
+    <div class="legend-item" id="legSolute" style="display:none;"><span class="dot dot-solu"></span> Solute (Blocks Crystal)</div>
+    <div class="status-badge" id="statusText">T = T_f° = 0°C | Ordered Ice Crystal</div>
+  </div>
+
+  <div class="info-panel" id="infoPanel">
+    <h2>📌 Depression in Freezing Point (ΔT<sub>f</sub>)</h2>
+    <ul>
+      <li>• <strong>Freezing Point:</strong> Temp. where liquid and solid phases have equal vapour pressure.</li>
+      <li>• <strong>Why it drops:</strong> Solute particles interfere with the ordered crystal lattice formation of solvent.</li>
+      <li>• <strong>Formula:</strong> <strong>ΔT<sub>f</sub> = T<sub>f</sub>° − T<sub>f</sub> = K<sub>f</sub> · m</strong></li>
+      <li>• <strong>K<sub>f</sub>:</strong> Cryoscopic constant (molal depression constant, K kg mol⁻¹).</li>
+      <li>• <strong>Uses:</strong> Antifreeze (ethylene glycol) in car radiators, salt on icy roads.</li>
+    </ul>
+  </div>
+
+  <div id="canvas-container"></div>
+
+  <div class="controls">
+    <button class="btn active" id="btnPure" onclick="setMode('pure')">Pure Ice (0°C)</button>
+    <button class="btn" id="btnSol0" onclick="setMode('sol0')">Solution (0°C)</button>
+    <button class="btn" id="btnSolFreeze" onclick="setMode('solFreeze')">Frozen Sol. (−2°C)</button>
+    <button class="btn active" id="btnRotate" onclick="toggleRotate()">Auto Rotate</button>
+  </div>
+
+  <div class="hint">👆 Drag to Rotate • Pinch to Zoom</div>
+  <div class="watermark">Created by <span>Kunal Ganeshakar</span> | Master Chemistry</div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+  <script>
+    const container = document.getElementById('canvas-container');
+    const scene = new THREE.Scene();
+
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.set(0.6, 2.5, 7.6);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    container.appendChild(renderer.domElement);
+
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.06;
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = 1.1;
+    controls.minDistance = 4;
+    controls.maxDistance = 14;
+
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+    scene.add(ambientLight);
+    const dirLight1 = new THREE.DirectionalLight(0xffffff, 0.9);
+    dirLight1.position.set(6, 8, 6);
+    scene.add(dirLight1);
+    const dirLight2 = new THREE.DirectionalLight(0x38bdf8, 0.5);
+    dirLight2.position.set(-6, -4, -6);
+    scene.add(dirLight2);
+
+    const rootGroup = new THREE.Group();
+    scene.add(rootGroup);
+
+    // Main Box Container shifted left
+    const boxGroup = new THREE.Group();
+    boxGroup.position.x = -0.45;
+    rootGroup.add(boxGroup);
+
+    const boxSize = 3.0;
+    const boxGeo = new THREE.BoxGeometry(boxSize, boxSize, boxSize);
+    const boxLines = new THREE.LineSegments(
+      new THREE.EdgesGeometry(boxGeo),
+      new THREE.LineBasicMaterial({ color: 0x7dd3fc, transparent: true, opacity: 0.4 })
+    );
+    boxGroup.add(boxLines);
+
+    // 3D Thermometer on right
+    const thermGroup = new THREE.Group();
+    thermGroup.position.set(1.7, 0, 0);
+    rootGroup.add(thermGroup);
+
+    const thermTube = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.14, 0.14, 3.6, 20),
+      new THREE.MeshPhysicalMaterial({ color: 0xe2e8f0, transparent: true, opacity: 0.25, depthWrite: false })
+    );
+    thermGroup.add(thermTube);
+
+    const thermBulb = new THREE.Mesh(
+      new THREE.SphereGeometry(0.26, 20, 20),
+      new THREE.MeshStandardMaterial({ color: 0x38bdf8, emissive: 0x0369a1, roughness: 0.2 })
+    );
+    thermBulb.position.y = -1.85;
+    thermGroup.add(thermBulb);
+
+    const mercuryCol = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.075, 0.075, 1.0, 16),
+      new THREE.MeshStandardMaterial({ color: 0x38bdf8, emissive: 0x0284c7, roughness: 0.2 })
+    );
+    thermGroup.add(mercuryCol);
+
+    // 0°C Reference Ring
+    const mark0 = new THREE.Mesh(
+      new THREE.TorusGeometry(0.17, 0.02, 8, 24),
+      new THREE.MeshBasicMaterial({ color: 0xfbbf24 })
+    );
+    mark0.rotation.x = Math.PI / 2;
+    mark0.position.y = 0.25; // 0°C level
+    thermGroup.add(mark0);
+
+    // 27 Solvent Molecules (3x3x3 Crystal Grid)
+    const sphereGeo = new THREE.SphereGeometry(0.22, 20, 20);
+    const iceMat = new THREE.MeshStandardMaterial({ color: 0x7dd3fc, emissive: 0x0284c7, roughness: 0.15, metalness: 0.2 });
+    const waterMat = new THREE.MeshStandardMaterial({ color: 0x0ea5e9, roughness: 0.3, metalness: 0.1 });
+
+    const solvents = [];
+    const spacing = 0.92;
+    for (let ix = -1; ix <= 1; ix++) {
+      for (let iy = -1; iy <= 1; iy++) {
+        for (let iz = -1; iz <= 1; iz++) {
+          const home = new THREE.Vector3(ix * spacing, iy * spacing, iz * spacing);
+          const mesh = new THREE.Mesh(sphereGeo, iceMat);
+          mesh.position.copy(home);
+          boxGroup.add(mesh);
+          solvents.push({
+            mesh,
+            home,
+            pos: home.clone(),
+            vel: new THREE.Vector3((Math.random()-0.5)*0.03, (Math.random()-0.5)*0.03, (Math.random()-0.5)*0.03),
+            phase: Math.random() * Math.PI * 2
+          });
+        }
+      }
+    }
+
+    // Crystal Lattice Bonds (visible when frozen)
+    const bondPoints = [];
+    for (let i = 0; i < solvents.length; i++) {
+      for (let j = i + 1; j < solvents.length; j++) {
+        if (solvents[i].home.distanceTo(solvents[j].home) < spacing + 0.1) {
+          bondPoints.push(solvents[i].home, solvents[j].home);
+        }
+      }
+    }
+    const latticeBondMat = new THREE.LineBasicMaterial({ color: 0xbae6fd, transparent: true, opacity: 0.55 });
+    const latticeBonds = new THREE.LineSegments(
+      new THREE.BufferGeometry().setFromPoints(bondPoints),
+      latticeBondMat
+    );
+    boxGroup.add(latticeBonds);
+
+    // 8 Solute Particles (Orange spheres that sit between solvent molecules)
+    const soluteGeo = new THREE.SphereGeometry(0.18, 18, 18);
+    const soluteMat = new THREE.MeshStandardMaterial({ color: 0xf97316, emissive: 0x7c2d12, roughness: 0.25 });
+    const solutes = [];
+    const soluteCoords = [
+      [0.46, 0.46, 0.46], [-0.46, 0.46, 0.46], [0.46, -0.46, 0.46], [-0.46, -0.46, 0.46],
+      [0.46, 0.46, -0.46], [-0.46, 0.46, -0.46], [0.46, -0.46, -0.46], [-0.46, -0.46, -0.46]
+    ];
+    soluteCoords.forEach(c => {
+      const m = new THREE.Mesh(soluteGeo, soluteMat);
+      m.position.set(...c);
+      m.visible = false;
+      boxGroup.add(m);
+      solutes.push({
+        mesh: m,
+        home: new THREE.Vector3(...c),
+        vel: new THREE.Vector3((Math.random()-0.5)*0.025, (Math.random()-0.5)*0.025, (Math.random()-0.5)*0.025)
+      });
+    });
+
+    let currentMode = 'pure'; // 'pure' | 'sol0' | 'solFreeze'
+    let currentMercH = 2.05;
+    let clock = 0;
+
+    function setMode(mode) {
+      currentMode = mode;
+      document.getElementById('btnPure').classList.toggle('active', mode === 'pure');
+      document.getElementById('btnSol0').classList.toggle('active', mode === 'sol0');
+      document.getElementById('btnSolFreeze').classList.toggle('active', mode === 'solFreeze');
+
+      const showSolute = (mode !== 'pure');
+      document.getElementById('legSolute').style.display = showSolute ? 'flex' : 'none';
+      solutes.forEach(s => s.mesh.visible = showSolute);
+
+      if (mode === 'pure') {
+        document.getElementById('mainTitle').textContent = 'Pure Water Freezing (0°C)';
+        document.getElementById('statusText').textContent = 'T = T_f° = 0°C | Ordered Ice Crystal';
+        document.getElementById('statusText').style.color = '#7dd3fc';
+        solvents.forEach(s => s.mesh.material = iceMat);
+      } else if (mode === 'sol0') {
+        document.getElementById('mainTitle').textContent = 'Solution at 0°C (Still Liquid!)';
+        document.getElementById('statusText').textContent = 'T = 0°C | Solute Disrupts Crystal Lattice';
+        document.getElementById('statusText').style.color = '#fbbf24';
+        solvents.forEach(s => s.mesh.material = waterMat);
+      } else {
+        document.getElementById('mainTitle').textContent = 'Solution Frozen (−2°C)';
+        document.getElementById('statusText').textContent = 'T_f = −2°C < T_f° | ΔT_f = 2°C';
+        document.getElementById('statusText').style.color = '#38bdf8';
+        solvents.forEach(s => s.mesh.material = iceMat);
+      }
+    }
+
+    function toggleRotate() {
+      controls.autoRotate = !controls.autoRotate;
+      document.getElementById('btnRotate').classList.toggle('active', controls.autoRotate);
+    }
+
+    function toggleInfo() {
+      document.getElementById('infoPanel').classList.toggle('show');
+    }
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    function animate() {
+      requestAnimationFrame(animate);
+      clock += 0.06;
+
+      // Thermometer height: 0°C = 2.05 (reaches y = 0.25); -2°C = 1.25 (below mark)
+      const targetMercH = (currentMode === 'solFreeze') ? 1.25 : 2.05;
+      currentMercH += (targetMercH - currentMercH) * 0.08;
+      mercuryCol.scale.y = currentMercH;
+      mercuryCol.position.y = -1.8 + currentMercH / 2;
+
+      const isFrozen = (currentMode !== 'sol0');
+      const targetBondOp = isFrozen ? 0.55 : 0.0;
+      latticeBondMat.opacity += (targetBondOp - latticeBondMat.opacity) * 0.1;
+
+      const limit = boxSize / 2 - 0.26;
+      solvents.forEach(s => {
+        if (isFrozen) {
+          const vib = new THREE.Vector3(
+            Math.sin(clock * 2 + s.phase) * 0.015,
+            Math.cos(clock * 2 + s.phase) * 0.015,
+            0
+          );
+          s.pos.lerp(s.home.clone().add(vib), 0.1);
+          s.mesh.position.copy(s.pos);
+        } else {
+          s.pos.add(s.vel);
+          if (Math.abs(s.pos.x) > limit) s.vel.x *= -1;
+          if (Math.abs(s.pos.y) > limit) s.vel.y *= -1;
+          if (Math.abs(s.pos.z) > limit) s.vel.z *= -1;
+          s.mesh.position.copy(s.pos);
+        }
+      });
+
+      solutes.forEach(s => {
+        if (!s.mesh.visible) return;
+        if (isFrozen) {
+          s.mesh.position.lerp(s.home, 0.1);
+        } else {
+          s.mesh.position.add(s.vel);
+          if (Math.abs(s.mesh.position.x) > limit) s.vel.x *= -1;
+          if (Math.abs(s.mesh.position.y) > limit) s.vel.y *= -1;
+          if (Math.abs(s.mesh.position.z) > limit) s.vel.z *= -1;
+        }
+      });
+
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    animate();
+  </script>
+</body>
+</html>

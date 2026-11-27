@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Raoult's Law (Ideal Solution) - Master Chemistry</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; }
+    body {
+      background: radial-gradient(circle at top, #1e1b4b 0%, #090d16 100%);
+      color: #f8fafc;
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+      user-select: none;
+    }
+    #canvas-container {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    .top-bar {
+      position: fixed;
+      top: 12px;
+      left: 12px;
+      right: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      pointer-events: none;
+      z-index: 10;
+    }
+    .title-box {
+      background: rgba(15, 23, 42, 0.78);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(129, 140, 248, 0.45);
+      padding: 8px 14px;
+      border-radius: 12px;
+      pointer-events: auto;
+    }
+    .title-box h1 {
+      font-size: 15px;
+      font-weight: 700;
+      color: #818cf8;
+      letter-spacing: 0.3px;
+    }
+    .title-box p {
+      font-size: 11px;
+      color: #cbd5e1;
+      margin-top: 2px;
+    }
+    .info-btn {
+      background: rgba(129, 140, 248, 0.2);
+      border: 1px solid #818cf8;
+      color: #e0e7ff;
+      padding: 8px 12px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      pointer-events: auto;
+    }
+    .legend {
+      position: fixed;
+      top: 72px;
+      left: 12px;
+      background: rgba(15, 23, 42, 0.78);
+      backdrop-filter: blur(6px);
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      border-radius: 10px;
+      padding: 7px 11px;
+      font-size: 11px;
+      color: #e2e8f0;
+      z-index: 10;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .legend-item { display: flex; align-items: center; gap: 6px; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+    .dot-a { background: #38bdf8; }
+    .dot-b { background: #c084fc; }
+    .status-badge {
+      margin-top: 3px;
+      padding-top: 4px;
+      border-top: 1px solid rgba(148, 163, 184, 0.2);
+      font-size: 10.5px;
+      color: #a5b4fc;
+      font-weight: 600;
+    }
+    .info-panel {
+      position: fixed;
+      top: 72px;
+      right: 12px;
+      width: 280px;
+      max-width: calc(100vw - 24px);
+      background: rgba(15, 23, 42, 0.94);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(129, 140, 248, 0.45);
+      border-radius: 14px;
+      padding: 12px 14px;
+      z-index: 15;
+      display: none;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    }
+    .info-panel.show { display: block; }
+    .info-panel h2 {
+      font-size: 13px;
+      color: #818cf8;
+      margin-bottom: 8px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+      padding-bottom: 5px;
+    }
+    .info-panel ul {
+      list-style: none;
+      font-size: 12px;
+      line-height: 1.65;
+      color: #e2e8f0;
+    }
+    .info-panel li strong { color: #38bdf8; }
+    .controls {
+      position: fixed;
+      bottom: 42px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 7px;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      padding: 8px 10px;
+      border-radius: 14px;
+      z-index: 10;
+      flex-wrap: nowrap;
+      max-width: calc(100vw - 16px);
+      overflow-x: auto;
+    }
+    .btn {
+      background: #1e293b;
+      color: #e2e8f0;
+      border: 1px solid #334155;
+      padding: 7px 11px;
+      border-radius: 9px;
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .btn.active {
+      background: #4f46e5;
+      border-color: #818cf8;
+      color: #ffffff;
+    }
+    .watermark {
+      position: fixed;
+      bottom: 10px;
+      right: 12px;
+      font-size: 11px;
+      font-weight: 600;
+      color: rgba(226, 232, 240, 0.75);
+      background: rgba(15, 23, 42, 0.65);
+      padding: 4px 10px;
+      border-radius: 8px;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      z-index: 10;
+      pointer-events: none;
+    }
+    .watermark span { color: #818cf8; }
+    .hint {
+      position: fixed;
+      bottom: 12px;
+      left: 12px;
+      font-size: 10px;
+      color: rgba(148, 163, 184, 0.8);
+      z-index: 10;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="top-bar">
+    <div class="title-box">
+      <h1 id="mainTitle">Ideal Solution (50% A + 50% B)</h1>
+      <p>12th HSC • Ch 2: Solutions (3D Model)</p>
+    </div>
+    <button class="info-btn" onclick="toggleInfo()">ℹ️ Notes</button>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><span class="dot dot-a"></span> Component A (Benzene)</div>
+    <div class="legend-item"><span class="dot dot-b"></span> Component B (Toluene)</div>
+    <div class="status-badge" id="statusText">x_A = 0.5, x_B = 0.5 | A–B = A–A = B–B</div>
+  </div>
+
+  <div class="info-panel" id="infoPanel">
+    <h2>📌 Raoult's Law & Ideal Solution</h2>
+    <ul>
+      <li>• <strong>Raoult's Law:</strong> Partial vapour pressure of each volatile component is directly proportional to its mole fraction.</li>
+      <li>• <strong>Formula:</strong> <strong>P<sub>total</sub> = P<sub>A</sub>°x<sub>A</sub> + P<sub>B</sub>°x<sub>B</sub></strong></li>
+      <li>• <strong>Interactions:</strong> A–B forces = A–A and B–B forces.</li>
+      <li>• <strong>Ideal Conditions:</strong> <strong>ΔH<sub>mix</sub> = 0</strong> and <strong>ΔV<sub>mix</sub> = 0</strong></li>
+      <li>• <strong>Examples:</strong> Benzene + Toluene, n-Hexane + n-Heptane.</li>
+    </ul>
+  </div>
+
+  <div id="canvas-container"></div>
+
+  <div class="controls">
+    <button class="btn" id="btnPureA" onclick="setMode('pureA')">Pure A (x_A=1)</button>
+    <button class="btn active" id="btnMix" onclick="setMode('mix')">Ideal Mix (50:50)</button>
+    <button class="btn" id="btnPureB" onclick="setMode('pureB')">Pure B (x_B=1)</button>
+    <button class="btn active" id="btnRotate" onclick="toggleRotate()">Auto Rotate</button>
+  </div>
+
+  <div class="hint">👆 Drag to Rotate • Pinch to Zoom</div>
+  <div class="watermark">Created by <span>Kunal Ganeshakar</span> | Master Chemistry</div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+  <script>
+    const container = document.getElementById('canvas-container');
+    const scene = new THREE.Scene();
+
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.set(0, 2.3, 7.6);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    container.appendChild(renderer.domElement);
+
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.06;
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = 1.1;
+    controls.minDistance = 4;
+    controls.maxDistance = 14;
+
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.65);
+    scene.add(ambientLight);
+
+    const dirLight1 = new THREE.DirectionalLight(0xffffff, 0.9);
+    dirLight1.position.set(6, 8, 6);
+    scene.add(dirLight1);
+
+    const dirLight2 = new THREE.DirectionalLight(0x818cf8, 0.5);
+    dirLight2.position.set(-6, -4, -6);
+    scene.add(dirLight2);
+
+    const rootGroup = new THREE.Group();
+    scene.add(rootGroup);
+
+    const cylR = 1.65;
+    const cylH = 4.2;
+    const bottomY = -2.1;
+    const topY = 2.1;
+    const liquidTopY = -0.35;
+
+    // Closed Glass Chamber
+    const glassCyl = new THREE.Mesh(
+      new THREE.CylinderGeometry(cylR, cylR, cylH, 36, 1, true),
+      new THREE.MeshPhysicalMaterial({
+        color: 0xa5b4fc,
+        transparent: true,
+        opacity: 0.16,
+        roughness: 0.1,
+        side: THREE.DoubleSide,
+        depthWrite: false
+      })
+    );
+    rootGroup.add(glassCyl);
+
+    // Base & Sealed Top Lid
+    const capMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.35, metalness: 0.65 });
+    const baseCap = new THREE.Mesh(new THREE.CylinderGeometry(cylR + 0.06, cylR + 0.06, 0.14, 36), capMat);
+    baseCap.position.y = bottomY - 0.07;
+    rootGroup.add(baseCap);
+
+    const topCap = new THREE.Mesh(new THREE.CylinderGeometry(cylR + 0.06, cylR + 0.06, 0.14, 36), capMat);
+    topCap.position.y = topY + 0.07;
+    rootGroup.add(topCap);
+
+    // Liquid Volume
+    const liquidH = liquidTopY - bottomY;
+    const liquidMat = new THREE.MeshPhysicalMaterial({
+      color: 0x6366f1,
+      transparent: true,
+      opacity: 0.25,
+      roughness: 0.15,
+      depthWrite: false
+    });
+    const liquidMesh = new THREE.Mesh(
+      new THREE.CylinderGeometry(cylR - 0.04, cylR - 0.04, liquidH, 36),
+      liquidMat
+    );
+    liquidMesh.position.y = bottomY + liquidH / 2;
+    rootGroup.add(liquidMesh);
+
+    const matA = new THREE.MeshStandardMaterial({ color: 0x38bdf8, emissive: 0x0369a1, roughness: 0.25 });
+    const matB = new THREE.MeshStandardMaterial({ color: 0xc084fc, emissive: 0x6b21a8, roughness: 0.25 });
+
+    // Liquid Molecules (32)
+    const liqGeo = new THREE.SphereGeometry(0.15, 18, 18);
+    const liquidMols = [];
+    for (let i = 0; i < 32; i++) {
+      const mesh = new THREE.Mesh(liqGeo, i % 2 === 0 ? matA : matB);
+      const angle = Math.random() * Math.PI * 2;
+      const r = Math.sqrt(Math.random()) * (cylR - 0.28);
+      const y = bottomY + 0.22 + Math.random() * (liquidH - 0.4);
+      mesh.position.set(r * Math.cos(angle), y, r * Math.sin(angle));
+      rootGroup.add(mesh);
+
+      liquidMols.push({
+        mesh,
+        index: i,
+        vel: new THREE.Vector3(
+          (Math.random() - 0.5) * 0.018,
+          (Math.random() - 0.5) * 0.014,
+          (Math.random() - 0.5) * 0.018
+        )
+      });
+    }
+
+    // Vapour Molecules (24)
+    const vapGeo = new THREE.SphereGeometry(0.11, 16, 16);
+    const vapourMols = [];
+    for (let i = 0; i < 24; i++) {
+      const mesh = new THREE.Mesh(vapGeo, i % 2 === 0 ? matA : matB);
+      const angle = Math.random() * Math.PI * 2;
+      const r = Math.sqrt(Math.random()) * (cylR - 0.24);
+      const y = liquidTopY + 0.25 + Math.random() * (topY - liquidTopY - 0.45);
+      mesh.position.set(r * Math.cos(angle), y, r * Math.sin(angle));
+      rootGroup.add(mesh);
+
+      vapourMols.push({
+        mesh,
+        index: i,
+        vel: new THREE.Vector3(
+          (Math.random() - 0.5) * 0.055,
+          (Math.random() - 0.5) * 0.055,
+          (Math.random() - 0.5) * 0.055
+        )
+      });
+    }
+
+    function setMode(mode) {
+      document.getElementById('btnPureA').classList.toggle('active', mode === 'pureA');
+      document.getElementById('btnMix').classList.toggle('active', mode === 'mix');
+      document.getElementById('btnPureB').classList.toggle('active', mode === 'pureB');
+
+      if (mode === 'pureA') {
+        document.getElementById('mainTitle').textContent = 'Pure Component A (x_A = 1)';
+        document.getElementById('statusText').textContent = 'P_total = P_A° | Only A–A Interactions';
+        liquidMat.color.setHex(0x0284c7);
+        liquidMols.forEach(m => m.mesh.material = matA);
+        vapourMols.forEach(m => m.mesh.material = matA);
+      } else if (mode === 'pureB') {
+        document.getElementById('mainTitle').textContent = 'Pure Component B (x_B = 1)';
+        document.getElementById('statusText').textContent = 'P_total = P_B° | Only B–B Interactions';
+        liquidMat.color.setHex(0x9333ea);
+        liquidMols.forEach(m => m.mesh.material = matB);
+        vapourMols.forEach(m => m.mesh.material = matB);
+      } else {
+        document.getElementById('mainTitle').textContent = 'Ideal Solution (50% A + 50% B)';
+        document.getElementById('statusText').textContent = 'x_A = 0.5, x_B = 0.5 | A–B = A–A = B–B';
+        liquidMat.color.setHex(0x6366f1);
+        liquidMols.forEach(m => m.mesh.material = (m.index % 2 === 0 ? matA : matB));
+        vapourMols.forEach(m => m.mesh.material = (m.index % 2 === 0 ? matA : matB));
+      }
+    }
+
+    function toggleRotate() {
+      controls.autoRotate = !controls.autoRotate;
+      document.getElementById('btnRotate').classList.toggle('active', controls.autoRotate);
+    }
+
+    function toggleInfo() {
+      document.getElementById('infoPanel').classList.toggle('show');
+    }
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    function bounceInCylinder(m, minY, maxY, maxR) {
+      m.mesh.position.add(m.vel);
+      const rSq = m.mesh.position.x * m.mesh.position.x + m.mesh.position.z * m.mesh.position.z;
+      if (rSq > maxR * maxR) {
+        const r = Math.sqrt(rSq);
+        const nx = m.mesh.position.x / r;
+        const nz = m.mesh.position.z / r;
+        const dot = m.vel.x * nx + m.vel.z * nz;
+        m.vel.x -= 2 * dot * nx;
+        m.vel.z -= 2 * dot * nz;
+        m.mesh.position.x = nx * maxR;
+        m.mesh.position.z = nz * maxR;
+      }
+      if (m.mesh.position.y > maxY) {
+        m.mesh.position.y = maxY;
+        m.vel.y = -Math.abs(m.vel.y);
+      } else if (m.mesh.position.y < minY) {
+        m.mesh.position.y = minY;
+        m.vel.y = Math.abs(m.vel.y);
+      }
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+
+      liquidMols.forEach(m => bounceInCylinder(m, bottomY + 0.18, liquidTopY - 0.16, cylR - 0.22));
+      vapourMols.forEach(m => bounceInCylinder(m, liquidTopY + 0.18, topY - 0.16, cylR - 0.2));
+
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    animate();
+  </script>
+</body>
+</html>

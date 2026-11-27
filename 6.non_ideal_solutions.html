@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Non-Ideal Solutions - Master Chemistry</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; }
+    body {
+      background: radial-gradient(circle at top, #27173a 0%, #090d16 100%);
+      color: #f8fafc;
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+      user-select: none;
+    }
+    #canvas-container {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    .top-bar {
+      position: fixed;
+      top: 12px;
+      left: 12px;
+      right: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      pointer-events: none;
+      z-index: 10;
+    }
+    .title-box {
+      background: rgba(15, 23, 42, 0.78);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(244, 114, 182, 0.45);
+      padding: 8px 14px;
+      border-radius: 12px;
+      pointer-events: auto;
+    }
+    .title-box h1 {
+      font-size: 15px;
+      font-weight: 700;
+      color: #f472b6;
+      letter-spacing: 0.3px;
+    }
+    .title-box p {
+      font-size: 11px;
+      color: #cbd5e1;
+      margin-top: 2px;
+    }
+    .info-btn {
+      background: rgba(244, 114, 182, 0.2);
+      border: 1px solid #f472b6;
+      color: #fce7f3;
+      padding: 8px 12px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      pointer-events: auto;
+    }
+    .legend {
+      position: fixed;
+      top: 72px;
+      left: 12px;
+      background: rgba(15, 23, 42, 0.78);
+      backdrop-filter: blur(6px);
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      border-radius: 10px;
+      padding: 7px 11px;
+      font-size: 11px;
+      color: #e2e8f0;
+      z-index: 10;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .legend-item { display: flex; align-items: center; gap: 6px; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+    .dot-a { background: #38bdf8; }
+    .dot-b { background: #fb7185; }
+    .status-badge {
+      margin-top: 3px;
+      padding-top: 4px;
+      border-top: 1px solid rgba(148, 163, 184, 0.2);
+      font-size: 10.5px;
+      color: #fbbf24;
+      font-weight: 600;
+    }
+    .info-panel {
+      position: fixed;
+      top: 72px;
+      right: 12px;
+      width: 285px;
+      max-width: calc(100vw - 24px);
+      background: rgba(15, 23, 42, 0.94);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(244, 114, 182, 0.45);
+      border-radius: 14px;
+      padding: 12px 14px;
+      z-index: 15;
+      display: none;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    }
+    .info-panel.show { display: block; }
+    .info-panel h2 {
+      font-size: 13px;
+      color: #f472b6;
+      margin-bottom: 8px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+      padding-bottom: 5px;
+    }
+    .info-panel ul {
+      list-style: none;
+      font-size: 11.8px;
+      line-height: 1.6;
+      color: #e2e8f0;
+    }
+    .info-panel li strong { color: #38bdf8; }
+    .controls {
+      position: fixed;
+      bottom: 42px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 7px;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      padding: 8px 10px;
+      border-radius: 14px;
+      z-index: 10;
+      flex-wrap: nowrap;
+      max-width: calc(100vw - 16px);
+      overflow-x: auto;
+    }
+    .btn {
+      background: #1e293b;
+      color: #e2e8f0;
+      border: 1px solid #334155;
+      padding: 7px 11px;
+      border-radius: 9px;
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .btn.active {
+      background: #db2777;
+      border-color: #f472b6;
+      color: #ffffff;
+    }
+    .watermark {
+      position: fixed;
+      bottom: 10px;
+      right: 12px;
+      font-size: 11px;
+      font-weight: 600;
+      color: rgba(226, 232, 240, 0.75);
+      background: rgba(15, 23, 42, 0.65);
+      padding: 4px 10px;
+      border-radius: 8px;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      z-index: 10;
+      pointer-events: none;
+    }
+    .watermark span { color: #f472b6; }
+    .hint {
+      position: fixed;
+      bottom: 12px;
+      left: 12px;
+      font-size: 10px;
+      color: rgba(148, 163, 184, 0.8);
+      z-index: 10;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="top-bar">
+    <div class="title-box">
+      <h1 id="mainTitle">Positive Deviation (+ve)</h1>
+      <p>12th HSC • Ch 2: Solutions (3D Model)</p>
+    </div>
+    <button class="info-btn" onclick="toggleInfo()">ℹ️ Notes</button>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><span class="dot dot-a"></span> <span id="lblA">Ethanol (A)</span></div>
+    <div class="legend-item"><span class="dot dot-b"></span> <span id="lblB">Acetone (B)</span></div>
+    <div class="status-badge" id="statusText">A–B &lt; A–A, B–B | High Vapour Pressure</div>
+  </div>
+
+  <div class="info-panel" id="infoPanel">
+    <h2>📌 Non-Ideal Solutions Key Points</h2>
+    <ul>
+      <li>• <strong>Positive Deviation:</strong> A–B forces are <strong>weaker</strong> than A–A &amp; B–B. Molecules escape easily → Higher Vapour Pressure.</li>
+      <li>• <strong>+ve Properties:</strong> ΔH<sub>mix</sub> &gt; 0, ΔV<sub>mix</sub> &gt; 0 (Ex: Ethanol + Acetone, CS₂ + Acetone).</li>
+      <li>• <strong>Negative Deviation:</strong> A–B forces are <strong>stronger</strong> (e.g., H-bonding). Molecules held tightly → Lower Vapour Pressure.</li>
+      <li>• <strong>−ve Properties:</strong> ΔH<sub>mix</sub> &lt; 0, ΔV<sub>mix</sub> &lt; 0 (Ex: Chloroform + Acetone, H₂O + HNO₃).</li>
+    </ul>
+  </div>
+
+  <div id="canvas-container"></div>
+
+  <div class="controls">
+    <button class="btn active" id="btnPos" onclick="setMode('pos')">Positive (+ve)</button>
+    <button class="btn" id="btnNeg" onclick="setMode('neg')">Negative (−ve)</button>
+    <button class="btn active" id="btnRotate" onclick="toggleRotate()">Auto Rotate</button>
+  </div>
+
+  <div class="hint">👆 Drag to Rotate • Pinch to Zoom</div>
+  <div class="watermark">Created by <span>Kunal Ganeshakar</span> | Master Chemistry</div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+  <script>
+    const container = document.getElementById('canvas-container');
+    const scene = new THREE.Scene();
+
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.set(0, 2.3, 7.6);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    container.appendChild(renderer.domElement);
+
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.06;
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = 1.1;
+    controls.minDistance = 4;
+    controls.maxDistance = 14;
+
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.65);
+    scene.add(ambientLight);
+
+    const dirLight1 = new THREE.DirectionalLight(0xffffff, 0.9);
+    dirLight1.position.set(6, 8, 6);
+    scene.add(dirLight1);
+
+    const dirLight2 = new THREE.DirectionalLight(0xf472b6, 0.5);
+    dirLight2.position.set(-6, -4, -6);
+    scene.add(dirLight2);
+
+    const rootGroup = new THREE.Group();
+    scene.add(rootGroup);
+
+    const cylR = 1.65;
+    const cylH = 4.2;
+    const bottomY = -2.1;
+    const topY = 2.1;
+
+    // Closed Glass Chamber
+    const glassCyl = new THREE.Mesh(
+      new THREE.CylinderGeometry(cylR, cylR, cylH, 36, 1, true),
+      new THREE.MeshPhysicalMaterial({
+        color: 0xf9a8d4,
+        transparent: true,
+        opacity: 0.15,
+        roughness: 0.1,
+        side: THREE.DoubleSide,
+        depthWrite: false
+      })
+    );
+    rootGroup.add(glassCyl);
+
+    // Base & Sealed Top Lid
+    const capMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.35, metalness: 0.65 });
+    const baseCap = new THREE.Mesh(new THREE.CylinderGeometry(cylR + 0.06, cylR + 0.06, 0.14, 36), capMat);
+    baseCap.position.y = bottomY - 0.07;
+    rootGroup.add(baseCap);
+
+    const topCap = new THREE.Mesh(new THREE.CylinderGeometry(cylR + 0.06, cylR + 0.06, 0.14, 36), capMat);
+    topCap.position.y = topY + 0.07;
+    rootGroup.add(topCap);
+
+    // Liquid Volume (height changes slightly to show ΔV > 0 vs ΔV < 0)
+    const liquidMat = new THREE.MeshPhysicalMaterial({
+      color: 0xe11d48,
+      transparent: true,
+      opacity: 0.22,
+      roughness: 0.15,
+      depthWrite: false
+    });
+    const liquidMesh = new THREE.Mesh(
+      new THREE.CylinderGeometry(cylR - 0.04, cylR - 0.04, 1.0, 36),
+      liquidMat
+    );
+    rootGroup.add(liquidMesh);
+
+    const matA = new THREE.MeshStandardMaterial({ color: 0x38bdf8, emissive: 0x0369a1, roughness: 0.25 });
+    const matB = new THREE.MeshStandardMaterial({ color: 0xfb7185, emissive: 0x9f1239, roughness: 0.25 });
+
+    // Liquid Molecules: 12 A-B pairs (24 molecules)
+    const liqGeo = new THREE.SphereGeometry(0.14, 18, 18);
+    const pairs = [];
+    const bondMat = new THREE.LineBasicMaterial({ color: 0xfef08a, transparent: true, opacity: 0.0 });
+
+    for (let i = 0; i < 12; i++) {
+      const angle = (i / 12) * Math.PI * 2;
+      const rad = 0.45 + (i % 2) * 0.68;
+      const y = bottomY + 0.35 + (i % 3) * 0.45;
+      const center = new THREE.Vector3(rad * Math.cos(angle), y, rad * Math.sin(angle));
+
+      const mA = new THREE.Mesh(liqGeo, matA);
+      const mB = new THREE.Mesh(liqGeo, matB);
+      rootGroup.add(mA);
+      rootGroup.add(mB);
+
+      const lineGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]);
+      const bondLine = new THREE.Line(lineGeo, bondMat);
+      rootGroup.add(bondLine);
+
+      pairs.push({
+        mA, mB, bondLine,
+        center,
+        vel: new THREE.Vector3(
+          (Math.random() - 0.5) * 0.015,
+          (Math.random() - 0.5) * 0.01,
+          (Math.random() - 0.5) * 0.015
+        ),
+        dir: new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize(),
+        sep: 0.42
+      });
+    }
+
+    // Vapour Molecules (30 total: 30 active in +ve deviation, only 9 active in -ve deviation)
+    const vapGeo = new THREE.SphereGeometry(0.105, 16, 16);
+    const vapourMols = [];
+    for (let i = 0; i < 30; i++) {
+      const mesh = new THREE.Mesh(vapGeo, i % 2 === 0 ? matA : matB);
+      const angle = Math.random() * Math.PI * 2;
+      const r = Math.sqrt(Math.random()) * (cylR - 0.24);
+      const y = -0.1 + Math.random() * (topY - 0.1);
+      mesh.position.set(r * Math.cos(angle), y, r * Math.sin(angle));
+      rootGroup.add(mesh);
+
+      vapourMols.push({
+        mesh,
+        index: i,
+        vel: new THREE.Vector3(
+          (Math.random() - 0.5) * 0.065,
+          (Math.random() - 0.5) * 0.065,
+          (Math.random() - 0.5) * 0.065
+        )
+      });
+    }
+
+    let isPositive = true;
+    let currentLiqH = 1.85;
+
+    function setMode(mode) {
+      isPositive = (mode === 'pos');
+      document.getElementById('btnPos').classList.toggle('active', isPositive);
+      document.getElementById('btnNeg').classList.toggle('active', !isPositive);
+
+      if (isPositive) {
+        document.getElementById('mainTitle').textContent = 'Positive Deviation (+ve)';
+        document.getElementById('lblA').textContent = 'Ethanol (A)';
+        document.getElementById('lblB').textContent = 'Acetone (B)';
+        document.getElementById('statusText').textContent = 'A–B < A–A, B–B | High Vapour Pressure (ΔV > 0)';
+        document.getElementById('statusText').style.color = '#fbbf24';
+        liquidMat.color.setHex(0xe11d48);
+      } else {
+        document.getElementById('mainTitle').textContent = 'Negative Deviation (−ve)';
+        document.getElementById('lblA').textContent = 'Chloroform (A)';
+        document.getElementById('lblB').textContent = 'Acetone (B)';
+        document.getElementById('statusText').textContent = 'A–B > A–A, B–B (H-Bond) | Low V.P. (ΔV < 0)';
+        document.getElementById('statusText').style.color = '#34d399';
+        liquidMat.color.setHex(0x0284c7);
+      }
+    }
+
+    function toggleRotate() {
+      controls.autoRotate = !controls.autoRotate;
+      document.getElementById('btnRotate').classList.toggle('active', controls.autoRotate);
+    }
+
+    function toggleInfo() {
+      document.getElementById('infoPanel').classList.toggle('show');
+    }
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    function animate() {
+      requestAnimationFrame(animate);
+
+      const targetLiqH = isPositive ? 1.88 : 1.52;
+      currentLiqH += (targetLiqH - currentLiqH) * 0.08;
+      liquidMesh.scale.y = currentLiqH;
+      liquidMesh.position.y = bottomY + currentLiqH / 2;
+      const liquidTopY = bottomY + currentLiqH;
+
+      const targetBondOp = isPositive ? 0.0 : 0.85;
+      bondMat.opacity += (targetBondOp - bondMat.opacity) * 0.1;
+
+      const targetSep = isPositive ? 0.48 : 0.16;
+      const maxR = cylR - 0.35;
+
+      pairs.forEach(p => {
+        p.sep += (targetSep - p.sep) * 0.1;
+        const speed = isPositive ? 1.3 : 0.55;
+        p.center.x += p.vel.x * speed;
+        p.center.y += p.vel.y * speed;
+        p.center.z += p.vel.z * speed;
+
+        const rSq = p.center.x * p.center.x + p.center.z * p.center.z;
+        if (rSq > maxR * maxR) {
+          const r = Math.sqrt(rSq);
+          const nx = p.center.x / r;
+          const nz = p.center.z / r;
+          const dot = p.vel.x * nx + p.vel.z * nz;
+          p.vel.x -= 2 * dot * nx;
+          p.vel.z -= 2 * dot * nz;
+          p.center.x = nx * maxR;
+          p.center.z = nz * maxR;
+        }
+        if (p.center.y > liquidTopY - 0.22) {
+          p.center.y = liquidTopY - 0.22;
+          p.vel.y = -Math.abs(p.vel.y);
+        } else if (p.center.y < bottomY + 0.22) {
+          p.center.y = bottomY + 0.22;
+          p.vel.y = Math.abs(p.vel.y);
+        }
+
+        p.mA.position.copy(p.center).addScaledVector(p.dir, p.sep);
+        p.mB.position.copy(p.center).addScaledVector(p.dir, -p.sep);
+
+        const pos = p.bondLine.geometry.attributes.position;
+        pos.setXYZ(0, p.mA.position.x, p.mA.position.y, p.mA.position.z);
+        pos.setXYZ(1, p.mB.position.x, p.mB.position.y, p.mB.position.z);
+        pos.needsUpdate = true;
+      });
+
+      const activeVapours = isPositive ? 30 : 9;
+      const vapMaxR = cylR - 0.2;
+      const vapSpeed = isPositive ? 1.25 : 0.7;
+
+      vapourMols.forEach(v => {
+        v.mesh.visible = (v.index < activeVapours);
+        if (!v.mesh.visible) return;
+
+        v.mesh.position.x += v.vel.x * vapSpeed;
+        v.mesh.position.y += v.vel.y * vapSpeed;
+        v.mesh.position.z += v.vel.z * vapSpeed;
+
+        const rSq = v.mesh.position.x * v.mesh.position.x + v.mesh.position.z * v.mesh.position.z;
+        if (rSq > vapMaxR * vapMaxR) {
+          const r = Math.sqrt(rSq);
+          const nx = v.mesh.position.x / r;
+          const nz = v.mesh.position.z / r;
+          const dot = v.vel.x * nx + v.vel.z * nz;
+          v.vel.x -= 2 * dot * nx;
+          v.vel.z -= 2 * dot * nz;
+          v.mesh.position.x = nx * vapMaxR;
+          v.mesh.position.z = nz * vapMaxR;
+        }
+        if (v.mesh.position.y > topY - 0.16) {
+          v.mesh.position.y = topY - 0.16;
+          v.vel.y = -Math.abs(v.vel.y);
+        } else if (v.mesh.position.y < liquidTopY + 0.18) {
+          v.mesh.position.y = liquidTopY + 0.18;
+          v.vel.y = Math.abs(v.vel.y);
+        }
+      });
+
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    animate();
+  </script>
+</body>
+</html>

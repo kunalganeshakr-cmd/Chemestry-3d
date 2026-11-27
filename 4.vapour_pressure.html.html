@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Vapour Pressure - Master Chemistry</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; }
+    body {
+      background: radial-gradient(circle at top, #172554 0%, #090d16 100%);
+      color: #f8fafc;
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+      user-select: none;
+    }
+    #canvas-container {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    .top-bar {
+      position: fixed;
+      top: 12px;
+      left: 12px;
+      right: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      pointer-events: none;
+      z-index: 10;
+    }
+    .title-box {
+      background: rgba(15, 23, 42, 0.78);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(56, 189, 248, 0.45);
+      padding: 8px 14px;
+      border-radius: 12px;
+      pointer-events: auto;
+    }
+    .title-box h1 {
+      font-size: 15px;
+      font-weight: 700;
+      color: #38bdf8;
+      letter-spacing: 0.3px;
+    }
+    .title-box p {
+      font-size: 11px;
+      color: #cbd5e1;
+      margin-top: 2px;
+    }
+    .info-btn {
+      background: rgba(56, 189, 248, 0.2);
+      border: 1px solid #38bdf8;
+      color: #e0f2fe;
+      padding: 8px 12px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      pointer-events: auto;
+    }
+    .legend {
+      position: fixed;
+      top: 72px;
+      left: 12px;
+      background: rgba(15, 23, 42, 0.78);
+      backdrop-filter: blur(6px);
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      border-radius: 10px;
+      padding: 7px 11px;
+      font-size: 11px;
+      color: #e2e8f0;
+      z-index: 10;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .legend-item { display: flex; align-items: center; gap: 6px; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+    .dot-solv { background: #38bdf8; }
+    .dot-vap { background: #e0f2fe; box-shadow: 0 0 6px #38bdf8; }
+    .dot-solu { background: #f97316; }
+    .status-badge {
+      margin-top: 3px;
+      padding-top: 4px;
+      border-top: 1px solid rgba(148, 163, 184, 0.2);
+      font-size: 10.5px;
+      color: #34d399;
+      font-weight: 600;
+    }
+    .info-panel {
+      position: fixed;
+      top: 72px;
+      right: 12px;
+      width: 280px;
+      max-width: calc(100vw - 24px);
+      background: rgba(15, 23, 42, 0.94);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(56, 189, 248, 0.45);
+      border-radius: 14px;
+      padding: 12px 14px;
+      z-index: 15;
+      display: none;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    }
+    .info-panel.show { display: block; }
+    .info-panel h2 {
+      font-size: 13px;
+      color: #38bdf8;
+      margin-bottom: 8px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+      padding-bottom: 5px;
+    }
+    .info-panel ul {
+      list-style: none;
+      font-size: 12px;
+      line-height: 1.65;
+      color: #e2e8f0;
+    }
+    .info-panel li strong { color: #fbbf24; }
+    .controls {
+      position: fixed;
+      bottom: 42px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 8px;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      padding: 8px 10px;
+      border-radius: 14px;
+      z-index: 10;
+      flex-wrap: nowrap;
+      max-width: calc(100vw - 16px);
+      overflow-x: auto;
+    }
+    .btn {
+      background: #1e293b;
+      color: #e2e8f0;
+      border: 1px solid #334155;
+      padding: 7px 11px;
+      border-radius: 9px;
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .btn.active {
+      background: #0284c7;
+      border-color: #38bdf8;
+      color: #ffffff;
+    }
+    .watermark {
+      position: fixed;
+      bottom: 10px;
+      right: 12px;
+      font-size: 11px;
+      font-weight: 600;
+      color: rgba(226, 232, 240, 0.75);
+      background: rgba(15, 23, 42, 0.65);
+      padding: 4px 10px;
+      border-radius: 8px;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      z-index: 10;
+      pointer-events: none;
+    }
+    .watermark span { color: #38bdf8; }
+    .hint {
+      position: fixed;
+      bottom: 12px;
+      left: 12px;
+      font-size: 10px;
+      color: rgba(148, 163, 184, 0.8);
+      z-index: 10;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="top-bar">
+    <div class="title-box">
+      <h1 id="mainTitle">Pure Solvent (High Vapour Pressure)</h1>
+      <p>12th HSC • Ch 2: Solutions (3D Model)</p>
+    </div>
+    <button class="info-btn" onclick="toggleInfo()">ℹ️ Notes</button>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><span class="dot dot-solv"></span> Solvent Molecule</div>
+    <div class="legend-item"><span class="dot dot-vap"></span> Vapour Molecule</div>
+    <div class="legend-item" id="legSolute" style="display:none;"><span class="dot dot-solu"></span> Non-volatile Solute</div>
+    <div class="status-badge" id="statusText">Vapour Pressure = P₁° (High)</div>
+  </div>
+
+  <div class="info-panel" id="infoPanel">
+    <h2>📌 Vapour Pressure Key Points</h2>
+    <ul>
+      <li>• <strong>Vapour Pressure:</strong> Pressure exerted by vapour in dynamic equilibrium with its liquid at a given temperature.</li>
+      <li>• <strong>Pure Solvent (P₁°):</strong> Entire surface is occupied by volatile solvent molecules → High rate of evaporation.</li>
+      <li>• <strong>Solution (P₁):</strong> Non-volatile solute blocks part of the surface → Fewer molecules escape into vapour phase.</li>
+      <li>• <strong>Result:</strong> <strong>P₁ &lt; P₁°</strong> (Lowering of Vapour Pressure: ΔP = P₁° − P₁).</li>
+    </ul>
+  </div>
+
+  <div id="canvas-container"></div>
+
+  <div class="controls">
+    <button class="btn active" id="btnPure" onclick="setMode('pure')">Pure Solvent (P₁°)</button>
+    <button class="btn" id="btnSol" onclick="setMode('solution')">Solution (P₁)</button>
+    <button class="btn active" id="btnRotate" onclick="toggleRotate()">Auto Rotate</button>
+  </div>
+
+  <div class="hint">👆 Drag to Rotate • Pinch to Zoom</div>
+  <div class="watermark">Created by <span>Kunal Ganeshakar</span> | Master Chemistry</div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+  <script>
+    const container = document.getElementById('canvas-container');
+    const scene = new THREE.Scene();
+
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.set(0, 2.4, 7.6);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    container.appendChild(renderer.domElement);
+
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.06;
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = 1.1;
+    controls.minDistance = 4;
+    controls.maxDistance = 14;
+
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.65);
+    scene.add(ambientLight);
+
+    const dirLight1 = new THREE.DirectionalLight(0xffffff, 0.9);
+    dirLight1.position.set(6, 8, 6);
+    scene.add(dirLight1);
+
+    const dirLight2 = new THREE.DirectionalLight(0x38bdf8, 0.5);
+    dirLight2.position.set(-6, -4, -6);
+    scene.add(dirLight2);
+
+    const rootGroup = new THREE.Group();
+    scene.add(rootGroup);
+
+    const cylR = 1.65;
+    const cylH = 4.2;
+    const bottomY = -2.1;
+    const topY = 2.1;
+    const liquidTopY = -0.35;
+
+    // Closed Glass Chamber
+    const glassCyl = new THREE.Mesh(
+      new THREE.CylinderGeometry(cylR, cylR, cylH, 36, 1, true),
+      new THREE.MeshPhysicalMaterial({
+        color: 0x93c5fd,
+        transparent: true,
+        opacity: 0.16,
+        roughness: 0.1,
+        side: THREE.DoubleSide,
+        depthWrite: false
+      })
+    );
+    rootGroup.add(glassCyl);
+
+    // Base & Sealed Top Lid
+    const capMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.35, metalness: 0.65 });
+    const baseCap = new THREE.Mesh(new THREE.CylinderGeometry(cylR + 0.06, cylR + 0.06, 0.14, 36), capMat);
+    baseCap.position.y = bottomY - 0.07;
+    rootGroup.add(baseCap);
+
+    const topCap = new THREE.Mesh(new THREE.CylinderGeometry(cylR + 0.06, cylR + 0.06, 0.14, 36), capMat);
+    topCap.position.y = topY + 0.07;
+    rootGroup.add(topCap);
+
+    // Liquid Volume
+    const liquidH = liquidTopY - bottomY;
+    const liquidMesh = new THREE.Mesh(
+      new THREE.CylinderGeometry(cylR - 0.04, cylR - 0.04, liquidH, 36),
+      new THREE.MeshPhysicalMaterial({
+        color: 0x0284c7,
+        transparent: true,
+        opacity: 0.28,
+        roughness: 0.15,
+        depthWrite: false
+      })
+    );
+    liquidMesh.position.y = bottomY + liquidH / 2;
+    rootGroup.add(liquidMesh);
+
+    // Surface Particles (22 total: in Solution mode, 10 become Non-volatile Solute)
+    const sphereGeo = new THREE.SphereGeometry(0.16, 20, 20);
+    const solventMat = new THREE.MeshStandardMaterial({ color: 0x38bdf8, roughness: 0.25, metalness: 0.2 });
+    const soluteMat = new THREE.MeshStandardMaterial({ color: 0xf97316, emissive: 0x7c2d12, roughness: 0.25, metalness: 0.2 });
+
+    const surfaceParticles = [];
+    const rings = [
+      { r: 0, count: 1 },
+      { r: 0.55, count: 6 },
+      { r: 1.12, count: 12 }
+    ];
+
+    let sIdx = 0;
+    rings.forEach(ring => {
+      for (let i = 0; i < ring.count; i++) {
+        const angle = (i / ring.count) * Math.PI * 2;
+        const x = ring.r * Math.cos(angle);
+        const z = ring.r * Math.sin(angle);
+        const isSoluteSlot = (sIdx % 2 === 1); // ~half surface blocked in solution mode
+
+        const mesh = new THREE.Mesh(sphereGeo, solventMat);
+        mesh.position.set(x, liquidTopY - 0.04, z);
+        rootGroup.add(mesh);
+
+        surfaceParticles.push({ mesh, isSoluteSlot, baseY: liquidTopY - 0.04, phase: Math.random() * Math.PI * 2 });
+        sIdx++;
+      }
+    });
+
+    // Vapour Molecules (28 total: all 28 active in Pure Solvent; only 11 active in Solution)
+    const vapGeo = new THREE.SphereGeometry(0.11, 16, 16);
+    const vapMat = new THREE.MeshStandardMaterial({
+      color: 0xe0f2fe,
+      emissive: 0x0284c7,
+      roughness: 0.2
+    });
+
+    const vapours = [];
+    for (let i = 0; i < 28; i++) {
+      const mesh = new THREE.Mesh(vapGeo, vapMat);
+      const angle = Math.random() * Math.PI * 2;
+      const r = Math.sqrt(Math.random()) * (cylR - 0.25);
+      const y = liquidTopY + 0.25 + Math.random() * (topY - liquidTopY - 0.45);
+      mesh.position.set(r * Math.cos(angle), y, r * Math.sin(angle));
+      rootGroup.add(mesh);
+
+      vapours.push({
+        mesh,
+        index: i,
+        vel: new THREE.Vector3(
+          (Math.random() - 0.5) * 0.055,
+          (Math.random() - 0.5) * 0.055,
+          (Math.random() - 0.5) * 0.055
+        )
+      });
+    }
+
+    let isSolutionMode = false;
+    let clock = 0;
+
+    function setMode(mode) {
+      isSolutionMode = (mode === 'solution');
+      document.getElementById('btnPure').classList.toggle('active', !isSolutionMode);
+      document.getElementById('btnSol').classList.toggle('active', isSolutionMode);
+      document.getElementById('legSolute').style.display = isSolutionMode ? 'flex' : 'none';
+
+      if (isSolutionMode) {
+        document.getElementById('mainTitle').textContent = 'Solution (Lower Vapour Pressure)';
+        document.getElementById('statusText').textContent = 'Vapour Pressure = P₁ < P₁° (Decreased)';
+        document.getElementById('statusText').style.color = '#fb923c';
+      } else {
+        document.getElementById('mainTitle').textContent = 'Pure Solvent (High Vapour Pressure)';
+        document.getElementById('statusText').textContent = 'Vapour Pressure = P₁° (High)';
+        document.getElementById('statusText').style.color = '#34d399';
+      }
+
+      surfaceParticles.forEach(p => {
+        if (isSolutionMode && p.isSoluteSlot) {
+          p.mesh.material = soluteMat;
+          p.mesh.scale.setScalar(1.15);
+        } else {
+          p.mesh.material = solventMat;
+          p.mesh.scale.setScalar(1.0);
+        }
+      });
+    }
+
+    function toggleRotate() {
+      controls.autoRotate = !controls.autoRotate;
+      document.getElementById('btnRotate').classList.toggle('active', controls.autoRotate);
+    }
+
+    function toggleInfo() {
+      document.getElementById('infoPanel').classList.toggle('show');
+    }
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    function animate() {
+      requestAnimationFrame(animate);
+      clock += 0.05;
+
+      // Gentle ripple on surface particles
+      surfaceParticles.forEach(p => {
+        p.mesh.position.y = p.baseY + Math.sin(clock + p.phase) * 0.03;
+      });
+
+      const activeVapours = isSolutionMode ? 11 : 28;
+      const maxR = cylR - 0.2;
+
+      vapours.forEach(v => {
+        v.mesh.visible = (v.index < activeVapours);
+        if (!v.mesh.visible) return;
+
+        v.mesh.position.add(v.vel);
+
+        // Bounce off cylinder wall
+        const rSq = v.mesh.position.x * v.mesh.position.x + v.mesh.position.z * v.mesh.position.z;
+        if (rSq > maxR * maxR) {
+          const r = Math.sqrt(rSq);
+          const nx = v.mesh.position.x / r;
+          const nz = v.mesh.position.z / r;
+          const dot = v.vel.x * nx + v.vel.z * nz;
+          v.vel.x -= 2 * dot * nx;
+          v.vel.z -= 2 * dot * nz;
+          v.mesh.position.x = nx * maxR;
+          v.mesh.position.z = nz * maxR;
+        }
+
+        // Bounce between liquid surface and sealed lid
+        if (v.mesh.position.y > topY - 0.16) {
+          v.mesh.position.y = topY - 0.16;
+          v.vel.y = -Math.abs(v.vel.y);
+        } else if (v.mesh.position.y < liquidTopY + 0.18) {
+          v.mesh.position.y = liquidTopY + 0.18;
+          v.vel.y = Math.abs(v.vel.y);
+        }
+      });
+
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    animate();
+  </script>
+</body>
+</html>

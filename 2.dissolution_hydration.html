@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Dissolution & Hydration - Master Chemistry</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; }
+    body {
+      background: radial-gradient(circle at top, #0f2942 0%, #090d16 100%);
+      color: #f8fafc;
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+      user-select: none;
+    }
+    #canvas-container {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    .top-bar {
+      position: fixed;
+      top: 12px;
+      left: 12px;
+      right: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      pointer-events: none;
+      z-index: 10;
+    }
+    .title-box {
+      background: rgba(15, 23, 42, 0.78);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(56, 189, 248, 0.45);
+      padding: 8px 14px;
+      border-radius: 12px;
+      pointer-events: auto;
+    }
+    .title-box h1 {
+      font-size: 15px;
+      font-weight: 700;
+      color: #38bdf8;
+      letter-spacing: 0.3px;
+    }
+    .title-box p {
+      font-size: 11px;
+      color: #cbd5e1;
+      margin-top: 2px;
+    }
+    .info-btn {
+      background: rgba(56, 189, 248, 0.2);
+      border: 1px solid #38bdf8;
+      color: #e0f2fe;
+      padding: 8px 12px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      pointer-events: auto;
+    }
+    .legend {
+      position: fixed;
+      top: 72px;
+      left: 12px;
+      background: rgba(15, 23, 42, 0.78);
+      backdrop-filter: blur(6px);
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      border-radius: 10px;
+      padding: 7px 11px;
+      font-size: 11px;
+      color: #e2e8f0;
+      z-index: 10;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .legend-item { display: flex; align-items: center; gap: 6px; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+    .dot-na { background: #a855f7; }
+    .dot-cl { background: #22c55e; }
+    .dot-o { background: #ef4444; }
+    .dot-h { background: #f8fafc; }
+    .info-panel {
+      position: fixed;
+      top: 72px;
+      right: 12px;
+      width: 280px;
+      max-width: calc(100vw - 24px);
+      background: rgba(15, 23, 42, 0.94);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(56, 189, 248, 0.45);
+      border-radius: 14px;
+      padding: 12px 14px;
+      z-index: 15;
+      display: none;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    }
+    .info-panel.show { display: block; }
+    .info-panel h2 {
+      font-size: 13px;
+      color: #38bdf8;
+      margin-bottom: 8px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+      padding-bottom: 5px;
+    }
+    .info-panel ul {
+      list-style: none;
+      font-size: 12px;
+      line-height: 1.65;
+      color: #e2e8f0;
+    }
+    .info-panel li strong { color: #fbbf24; }
+    .controls {
+      position: fixed;
+      bottom: 42px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 8px;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      padding: 8px 10px;
+      border-radius: 14px;
+      z-index: 10;
+      flex-wrap: nowrap;
+      max-width: calc(100vw - 16px);
+      overflow-x: auto;
+    }
+    .btn {
+      background: #1e293b;
+      color: #e2e8f0;
+      border: 1px solid #334155;
+      padding: 7px 11px;
+      border-radius: 9px;
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .btn.active {
+      background: #0284c7;
+      border-color: #38bdf8;
+      color: #ffffff;
+    }
+    .watermark {
+      position: fixed;
+      bottom: 10px;
+      right: 12px;
+      font-size: 11px;
+      font-weight: 600;
+      color: rgba(226, 232, 240, 0.75);
+      background: rgba(15, 23, 42, 0.65);
+      padding: 4px 10px;
+      border-radius: 8px;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      z-index: 10;
+      pointer-events: none;
+    }
+    .watermark span { color: #38bdf8; }
+    .hint {
+      position: fixed;
+      bottom: 12px;
+      left: 12px;
+      font-size: 10px;
+      color: rgba(148, 163, 184, 0.8);
+      z-index: 10;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="top-bar">
+    <div class="title-box">
+      <h1 id="mainTitle">Dissolution & Hydration (NaCl)</h1>
+      <p>12th HSC • Ch 2: Solutions (3D Model)</p>
+    </div>
+    <button class="info-btn" onclick="toggleInfo()">ℹ️ Notes</button>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><span class="dot dot-na"></span> Na⁺ Cation (+)</div>
+    <div class="legend-item"><span class="dot dot-cl"></span> Cl⁻ Anion (−)</div>
+    <div class="legend-item"><span class="dot dot-o"></span> Oxygen (δ⁻ of H₂O)</div>
+    <div class="legend-item"><span class="dot dot-h"></span> Hydrogen (δ⁺ of H₂O)</div>
+  </div>
+
+  <div class="info-panel" id="infoPanel">
+    <h2>📌 Dissolution & Hydration Key Points</h2>
+    <ul>
+      <li>• <strong>Ion-Dipole Interaction:</strong> Polar water molecules attract Na⁺ and Cl⁻ ions away from the crystal lattice.</li>
+      <li>• <strong>Hydration of Na⁺:</strong> Negative oxygen ends (δ⁻) of H₂O face toward Na⁺.</li>
+      <li>• <strong>Hydration of Cl⁻:</strong> Positive hydrogen ends (δ⁺) of H₂O face toward Cl⁻.</li>
+      <li>• <strong>Condition:</strong> Dissolution occurs when <strong>Hydration Enthalpy ≥ Lattice Enthalpy</strong>.</li>
+    </ul>
+  </div>
+
+  <div id="canvas-container"></div>
+
+  <div class="controls">
+    <button class="btn active" id="btnCrystal" onclick="setMode('crystal')">Solid NaCl Crystal</button>
+    <button class="btn" id="btnHydrate" onclick="setMode('hydrate')">Dissolve (Hydration)</button>
+    <button class="btn active" id="btnRotate" onclick="toggleRotate()">Auto Rotate</button>
+  </div>
+
+  <div class="hint">👆 Drag to Rotate • Pinch to Zoom</div>
+  <div class="watermark">Created by <span>Kunal Ganeshakar</span> | Master Chemistry</div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+  <script>
+    const container = document.getElementById('canvas-container');
+    const scene = new THREE.Scene();
+
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.set(0, 2.5, 8.2);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    container.appendChild(renderer.domElement);
+
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.06;
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = 1.2;
+    controls.minDistance = 4;
+    controls.maxDistance = 15;
+
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.65);
+    scene.add(ambientLight);
+
+    const dirLight1 = new THREE.DirectionalLight(0xffffff, 0.95);
+    dirLight1.position.set(6, 8, 6);
+    scene.add(dirLight1);
+
+    const dirLight2 = new THREE.DirectionalLight(0x38bdf8, 0.45);
+    dirLight2.position.set(-6, -4, -6);
+    scene.add(dirLight2);
+
+    const rootGroup = new THREE.Group();
+    scene.add(rootGroup);
+
+    const sphereGeo = new THREE.SphereGeometry(1, 24, 24);
+    const naMat = new THREE.MeshStandardMaterial({ color: 0xa855f7, roughness: 0.25, metalness: 0.25 });
+    const clMat = new THREE.MeshStandardMaterial({ color: 0x22c55e, roughness: 0.25, metalness: 0.25 });
+    const oMat = new THREE.MeshStandardMaterial({ color: 0xef4444, roughness: 0.25, metalness: 0.15 });
+    const hMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.3, metalness: 0.1 });
+
+    // Helper: Create a Water (H2O) Molecule Group
+    // Local +Z points from Oxygen toward the midpoint of the two Hydrogens (positive end)
+    // Local -Z points toward Oxygen (negative end)
+    function createWaterMolecule() {
+      const grp = new THREE.Group();
+      const o = new THREE.Mesh(sphereGeo, oMat);
+      o.scale.setScalar(0.18);
+      grp.add(o);
+
+      const h1 = new THREE.Mesh(sphereGeo, hMat);
+      h1.scale.setScalar(0.11);
+      h1.position.set(0.14, 0, 0.14);
+      grp.add(h1);
+
+      const h2 = new THREE.Mesh(sphereGeo, hMat);
+      h2.scale.setScalar(0.11);
+      h2.position.set(-0.14, 0, 0.14);
+      grp.add(h2);
+
+      return grp;
+    }
+
+    // Create 2x2x2 NaCl Crystal (4 Na+ and 4 Cl-)
+    // Highlight 1 Na+ (left) and 1 Cl- (right) with hydration shells when dissolved
+    const ions = [];
+    const spacing = 0.85;
+    const dissolvedOffsets = [
+      new THREE.Vector3(-2.3,  0.0,  0.0), // Na+ (main hydrated)
+      new THREE.Vector3( 2.3,  0.0,  0.0), // Cl- (main hydrated)
+      new THREE.Vector3(-1.4,  2.0, -1.2),
+      new THREE.Vector3( 1.4,  2.0,  1.2),
+      new THREE.Vector3(-1.5, -2.0,  1.1),
+      new THREE.Vector3( 1.5, -2.0, -1.1),
+      new THREE.Vector3( 0.0,  2.2,  0.0),
+      new THREE.Vector3( 0.0, -2.2,  0.0)
+    ];
+
+    let idx = 0;
+    for (let ix = 0; ix < 2; ix++) {
+      for (let iy = 0; iy < 2; iy++) {
+        for (let iz = 0; iz < 2; iz++) {
+          const isNa = (ix + iy + iz) % 2 === 0;
+          const mesh = new THREE.Mesh(sphereGeo, isNa ? naMat : clMat);
+          const home = new THREE.Vector3((ix - 0.5) * spacing, (iy - 0.5) * spacing, (iz - 0.5) * spacing);
+          mesh.position.copy(home);
+          mesh.scale.setScalar(isNa ? 0.34 : 0.46);
+          rootGroup.add(mesh);
+
+          ions.push({
+            mesh,
+            isNa,
+            home,
+            dissolved: dissolvedOffsets[idx]
+          });
+          idx++;
+        }
+      }
+    }
+
+    // Create 12 Water Molecules (6 hydrate Na+ at ions[0], 6 hydrate Cl- at ions[1])
+    const shellDirs = [
+      new THREE.Vector3( 1,  0,  0),
+      new THREE.Vector3(-1,  0,  0),
+      new THREE.Vector3( 0,  1,  0),
+      new THREE.Vector3( 0, -1,  0),
+      new THREE.Vector3( 0,  0,  1),
+      new THREE.Vector3( 0,  0, -1)
+    ];
+
+    const waters = [];
+    for (let i = 0; i < 12; i++) {
+      const w = createWaterMolecule();
+      const angle = (i / 12) * Math.PI * 2;
+      const radius = 3.2 + (i % 2) * 0.6;
+      const yOff = ((i % 3) - 1) * 1.1;
+      const freePos = new THREE.Vector3(Math.cos(angle) * radius, yOff, Math.sin(angle) * radius);
+      w.position.copy(freePos);
+      rootGroup.add(w);
+
+      const targetIonIdx = i < 6 ? 0 : 1; // 0 = Na+, 1 = Cl-
+      const dir = shellDirs[i % 6];
+      const shellDist = targetIonIdx === 0 ? 0.95 : 1.1;
+
+      waters.push({
+        mesh: w,
+        freePos,
+        targetIonIdx,
+        dir,
+        shellDist,
+        phase: Math.random() * Math.PI * 2
+      });
+    }
+
+    // Hydration Shell Wireframes (visible in Hydrate mode)
+    const shellGeo = new THREE.SphereGeometry(1.15, 16, 16);
+    const naShell = new THREE.Mesh(
+      shellGeo,
+      new THREE.MeshBasicMaterial({ color: 0xa855f7, wireframe: true, transparent: true, opacity: 0 })
+    );
+    naShell.position.copy(ions[0].dissolved);
+    rootGroup.add(naShell);
+
+    const clShell = new THREE.Mesh(
+      shellGeo,
+      new THREE.MeshBasicMaterial({ color: 0x22c55e, wireframe: true, transparent: true, opacity: 0 })
+    );
+    clShell.position.copy(ions[1].dissolved);
+    rootGroup.add(clShell);
+
+    let isHydrated = false;
+    let clock = 0;
+
+    function setMode(mode) {
+      isHydrated = (mode === 'hydrate');
+      document.getElementById('btnCrystal').classList.toggle('active', !isHydrated);
+      document.getElementById('btnHydrate').classList.toggle('active', isHydrated);
+    }
+
+    function toggleRotate() {
+      controls.autoRotate = !controls.autoRotate;
+      document.getElementById('btnRotate').classList.toggle('active', controls.autoRotate);
+    }
+
+    function toggleInfo() {
+      document.getElementById('infoPanel').classList.toggle('show');
+    }
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    function animate() {
+      requestAnimationFrame(animate);
+      clock += 0.03;
+
+      ions.forEach(ion => {
+        const target = isHydrated ? ion.dissolved : ion.home;
+        ion.mesh.position.lerp(target, 0.07);
+      });
+
+      waters.forEach(w => {
+        if (isHydrated) {
+          const ionPos = ions[w.targetIonIdx].mesh.position;
+          const targetPos = ionPos.clone().addScaledVector(w.dir, w.shellDist);
+          w.mesh.position.lerp(targetPos, 0.08);
+
+          // Orient water dipole properly:
+          // Na+ (targetIonIdx === 0): Oxygen (-Z) faces ion -> look AWAY from ion
+          // Cl- (targetIonIdx === 1): Hydrogens (+Z) face ion -> look TOWARD ion
+          if (w.targetIonIdx === 0) {
+            const awayPoint = w.mesh.position.clone().add(w.dir);
+            w.mesh.lookAt(awayPoint);
+          } else {
+            w.mesh.lookAt(ionPos);
+          }
+        } else {
+          const floatPos = w.freePos.clone();
+          floatPos.y += Math.sin(clock + w.phase) * 0.25;
+          w.mesh.position.lerp(floatPos, 0.06);
+          w.mesh.rotation.x += 0.01;
+          w.mesh.rotation.y += 0.015;
+        }
+      });
+
+      const targetShellOp = isHydrated ? 0.16 : 0.0;
+      naShell.material.opacity += (targetShellOp - naShell.material.opacity) * 0.08;
+      clShell.material.opacity += (targetShellOp - clShell.material.opacity) * 0.08;
+      naShell.rotation.y += 0.005;
+      clShell.rotation.y -= 0.005;
+
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    animate();
+  </script>
+</body>
+</html>

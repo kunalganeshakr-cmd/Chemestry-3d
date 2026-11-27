@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Isotonic, Hypotonic & Hypertonic - Master Chemistry</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; }
+    body {
+      background: radial-gradient(circle at top, #3b0d18 0%, #090d16 100%);
+      color: #f8fafc;
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+      user-select: none;
+    }
+    #canvas-container { width: 100%; height: 100%; display: block; }
+    .top-bar {
+      position: fixed; top: 12px; left: 12px; right: 12px;
+      display: flex; justify-content: space-between; align-items: center;
+      pointer-events: none; z-index: 10;
+    }
+    .title-box {
+      background: rgba(15, 23, 42, 0.78); backdrop-filter: blur(8px);
+      border: 1px solid rgba(251, 113, 133, 0.45);
+      padding: 8px 14px; border-radius: 12px; pointer-events: auto;
+    }
+    .title-box h1 { font-size: 15px; font-weight: 700; color: #fb7185; letter-spacing: 0.3px; }
+    .title-box p { font-size: 11px; color: #cbd5e1; margin-top: 2px; }
+    .info-btn {
+      background: rgba(251, 113, 133, 0.2); border: 1px solid #fb7185;
+      color: #ffe4e6; padding: 8px 12px; border-radius: 10px;
+      font-size: 12px; font-weight: 600; cursor: pointer; pointer-events: auto;
+    }
+    .legend {
+      position: fixed; top: 72px; left: 12px;
+      background: rgba(15, 23, 42, 0.78); backdrop-filter: blur(6px);
+      border: 1px solid rgba(148, 163, 184, 0.25); border-radius: 10px;
+      padding: 7px 11px; font-size: 11px; color: #e2e8f0; z-index: 10;
+      pointer-events: none; display: flex; flex-direction: column; gap: 4px;
+    }
+    .legend-item { display: flex; align-items: center; gap: 6px; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+    .dot-rbc { background: #e11d48; }
+    .dot-water { background: #38bdf8; }
+    .status-badge {
+      margin-top: 3px; padding-top: 4px;
+      border-top: 1px solid rgba(148, 163, 184, 0.2);
+      font-size: 10.5px; color: #34d399; font-weight: 600;
+    }
+    .info-panel {
+      position: fixed; top: 72px; right: 12px; width: 285px;
+      max-width: calc(100vw - 24px); background: rgba(15, 23, 42, 0.94);
+      backdrop-filter: blur(10px); border: 1px solid rgba(251, 113, 133, 0.45);
+      border-radius: 14px; padding: 12px 14px; z-index: 15; display: none;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    }
+    .info-panel.show { display: block; }
+    .info-panel h2 {
+      font-size: 13px; color: #fb7185; margin-bottom: 8px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.25); padding-bottom: 5px;
+    }
+    .info-panel ul { list-style: none; font-size: 11.8px; line-height: 1.65; color: #e2e8f0; }
+    .info-panel li strong { color: #fbbf24; }
+    .controls {
+      position: fixed; bottom: 42px; left: 50%; transform: translateX(-50%);
+      display: flex; gap: 7px; background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(8px); border: 1px solid rgba(148, 163, 184, 0.25);
+      padding: 8px 10px; border-radius: 14px; z-index: 10;
+      flex-wrap: nowrap; max-width: calc(100vw - 16px); overflow-x: auto;
+    }
+    .btn {
+      background: #1e293b; color: #e2e8f0; border: 1px solid #334155;
+      padding: 7px 11px; border-radius: 9px; font-size: 12px;
+      font-weight: 600; white-space: nowrap; cursor: pointer; transition: 0.2s;
+    }
+    .btn.active { background: #e11d48; border-color: #fb7185; color: #ffffff; }
+    .watermark {
+      position: fixed; bottom: 10px; right: 12px; font-size: 11px; font-weight: 600;
+      color: rgba(226, 232, 240, 0.75); background: rgba(15, 23, 42, 0.65);
+      padding: 4px 10px; border-radius: 8px; border: 1px solid rgba(148, 163, 184, 0.2);
+      z-index: 10; pointer-events: none;
+    }
+    .watermark span { color: #fb7185; }
+    .hint {
+      position: fixed; bottom: 12px; left: 12px; font-size: 10px;
+      color: rgba(148, 163, 184, 0.8); z-index: 10; pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="top-bar">
+    <div class="title-box">
+      <h1 id="mainTitle">Isotonic Solution (0.9% NaCl)</h1>
+      <p>12th HSC • Ch 2: Solutions (3D RBC Model)</p>
+    </div>
+    <button class="info-btn" onclick="toggleInfo()">ℹ️ Notes</button>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><span class="dot dot-rbc"></span> Red Blood Cell (RBC)</div>
+    <div class="legend-item"><span class="dot dot-water"></span> Water Molecules (H₂O)</div>
+    <div class="status-badge" id="statusText">Normal Shape | Equal H₂O In &amp; Out</div>
+  </div>
+
+  <div class="info-panel" id="infoPanel">
+    <h2>📌 Tonicity of Solutions (RBC)</h2>
+    <ul>
+      <li>• <strong>Isotonic (0.9% NaCl):</strong> Same osmotic pressure as blood plasma. No net flow → RBC keeps normal biconcave shape.</li>
+      <li>• <strong>Hypotonic (&lt; 0.9% NaCl):</strong> Lower osmotic pressure outside. Water enters RBC (<strong>Endosmosis</strong>) → Cell swells &amp; may burst.</li>
+      <li>• <strong>Hypertonic (&gt; 0.9% NaCl):</strong> Higher osmotic pressure outside. Water leaves RBC (<strong>Exosmosis</strong>) → Cell shrinks (Plasmolysis).</li>
+    </ul>
+  </div>
+
+  <div id="canvas-container"></div>
+
+  <div class="controls">
+    <button class="btn active" id="btnIso" onclick="setMode('iso')">Isotonic (0.9%)</button>
+    <button class="btn" id="btnHypo" onclick="setMode('hypo')">Hypotonic (Swells)</button>
+    <button class="btn" id="btnHyper" onclick="setMode('hyper')">Hypertonic (Shrinks)</button>
+    <button class="btn active" id="btnRotate" onclick="toggleRotate()">Auto Rotate</button>
+  </div>
+
+  <div class="hint">👆 Drag to Rotate • Pinch to Zoom</div>
+  <div class="watermark">Created by <span>Kunal Ganeshakar</span> | Master Chemistry</div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+  <script>
+    const container = document.getElementById('canvas-container');
+    const scene = new THREE.Scene();
+
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.set(0, 2.2, 6.2);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    container.appendChild(renderer.domElement);
+
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.06;
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = 1.2;
+    controls.minDistance = 3.2;
+    controls.maxDistance = 12;
+
+    scene.add(new THREE.AmbientLight(0xffffff, 0.65));
+    const d1 = new THREE.DirectionalLight(0xffffff, 0.95); d1.position.set(5, 7, 5); scene.add(d1);
+    const d2 = new THREE.DirectionalLight(0xfb7185, 0.5); d2.position.set(-5, -4, -5); scene.add(d2);
+
+    const rootGroup = new THREE.Group();
+    scene.add(rootGroup);
+
+    // Create Biconcave Red Blood Cell (RBC) Geometry
+    const rbcGeo = new THREE.SphereGeometry(1.4, 48, 36);
+    const basePos = rbcGeo.attributes.position.array.slice();
+    const rbcMat = new THREE.MeshStandardMaterial({
+      color: 0xe11d48,
+      emissive: 0x4c0519,
+      roughness: 0.32,
+      metalness: 0.1
+    });
+    const rbcMesh = new THREE.Mesh(rbcGeo, rbcMat);
+    rootGroup.add(rbcMesh);
+
+    // Water Molecules orbiting / entering / leaving RBC (32 spheres)
+    const wGeo = new THREE.SphereGeometry(0.085, 14, 14);
+    const wMat = new THREE.MeshStandardMaterial({ color: 0x38bdf8, emissive: 0x0284c7, roughness: 0.2 });
+    const waters = [];
+    for (let i = 0; i < 32; i++) {
+      const m = new THREE.Mesh(wGeo, wMat);
+      const dir = new THREE.Vector3(Math.random()-0.5, Math.random()-0.5, Math.random()-0.5).normalize();
+      const dist = 1.6 + Math.random() * 1.8;
+      m.position.copy(dir).multiplyScalar(dist);
+      rootGroup.add(m);
+      waters.push({ mesh: m, dir, dist, phase: Math.random() * Math.PI * 2 });
+    }
+
+    let mode = 'iso'; // 'iso' | 'hypo' | 'hyper'
+    let morphFactor = 0; // 0 = biconcave (iso), 1 = swollen sphere (hypo), -1 = shriveled (hyper)
+    let clock = 0;
+
+    function setMode(m) {
+      mode = m;
+      document.getElementById('btnIso').classList.toggle('active', m === 'iso');
+      document.getElementById('btnHypo').classList.toggle('active', m === 'hypo');
+      document.getElementById('btnHyper').classList.toggle('active', m === 'hyper');
+
+      if (m === 'iso') {
+        document.getElementById('mainTitle').textContent = 'Isotonic Solution (0.9% NaCl)';
+        document.getElementById('statusText').textContent = 'Normal Shape | Equal H₂O In & Out';
+        document.getElementById('statusText').style.color = '#34d399';
+      } else if (m === 'hypo') {
+        document.getElementById('mainTitle').textContent = 'Hypotonic Solution (< 0.9% NaCl)';
+        document.getElementById('statusText').textContent = 'Endosmosis (H₂O Enters) → RBC Swells!';
+        document.getElementById('statusText').style.color = '#38bdf8';
+      } else {
+        document.getElementById('mainTitle').textContent = 'Hypertonic Solution (> 0.9% NaCl)';
+        document.getElementById('statusText').textContent = 'Exosmosis (H₂O Leaves) → RBC Shrinks!';
+        document.getElementById('statusText').style.color = '#fbbf24';
+      }
+    }
+
+    function updateRBCGeometry(factor) {
+      const pos = rbcGeo.attributes.position;
+      for (let i = 0; i < pos.count; i++) {
+        const bx = basePos[i * 3];
+        const by = basePos[i * 3 + 1];
+        const bz = basePos[i * 3 + 2];
+
+        const rXZ = Math.sqrt(bx * bx + bz * bz) / 1.4; // 0 at center, 1 at rim
+
+        // Biconcave shape (iso: factor = 0)
+        const biconcaveY = by * (0.28 + 0.35 * Math.pow(rXZ, 2));
+
+        // Swollen sphere (hypo: factor = +1)
+        const hypoX = bx * 1.18;
+        const hypoY = by * 1.12;
+        const hypoZ = bz * 1.18;
+
+        // Shriveled / Crenated (hyper: factor = -1)
+        const wrinkle = 1 + 0.16 * Math.sin(bx * 6) * Math.cos(bz * 6) * Math.sin(by * 6);
+        const hyperX = bx * 0.68 * wrinkle;
+        const hyperY = biconcaveY * 0.65 * wrinkle;
+        const hyperZ = bz * 0.68 * wrinkle;
+
+        let fx, fy, fz;
+        if (factor >= 0) {
+          fx = bx + (hypoX - bx) * factor;
+          fy = biconcaveY + (hypoY - biconcaveY) * factor;
+          fz = bz + (hypoZ - bz) * factor;
+        } else {
+          const t = -factor;
+          fx = bx + (hyperX - bx) * t;
+          fy = biconcaveY + (hyperY - biconcaveY) * t;
+          fz = bz + (hyperZ - bz) * t;
+        }
+        pos.setXYZ(i, fx, fy, fz);
+      }
+      pos.needsUpdate = true;
+      rbcGeo.computeVertexNormals();
+    }
+
+    function toggleRotate() {
+      controls.autoRotate = !controls.autoRotate;
+      document.getElementById('btnRotate').classList.toggle('active', controls.autoRotate);
+    }
+    function toggleInfo() { document.getElementById('infoPanel').classList.toggle('show'); }
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    function animate() {
+      requestAnimationFrame(animate);
+      clock += 0.04;
+
+      const targetMorph = mode === 'hypo' ? 1 : (mode === 'hyper' ? -1 : 0);
+      morphFactor += (targetMorph - morphFactor) * 0.08;
+      updateRBCGeometry(morphFactor);
+
+      // Animate Water Molecules
+      waters.forEach(w => {
+        if (mode === 'hypo') {
+          // Flow INWARD toward RBC
+          w.dist -= 0.032;
+          if (w.dist < 0.8) w.dist = 3.2;
+        } else if (mode === 'hyper') {
+          // Flow OUTWARD away from RBC
+          w.dist += 0.032;
+          if (w.dist > 3.2) w.dist = 0.85;
+        } else {
+          // Gentle oscillation in & out
+          w.dist = 2.0 + Math.sin(clock + w.phase) * 0.55;
+        }
+        w.mesh.position.copy(w.dir).multiplyScalar(w.dist);
+      });
+
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    animate();
+  </script>
+</body>
+</html>

@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Osmosis & SPM - Master Chemistry</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; }
+    body {
+      background: radial-gradient(circle at top, #0f292e 0%, #090d16 100%);
+      color: #f8fafc;
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+      user-select: none;
+    }
+    #canvas-container { width: 100%; height: 100%; display: block; }
+    .top-bar {
+      position: fixed; top: 12px; left: 12px; right: 12px;
+      display: flex; justify-content: space-between; align-items: center;
+      pointer-events: none; z-index: 10;
+    }
+    .title-box {
+      background: rgba(15, 23, 42, 0.78); backdrop-filter: blur(8px);
+      border: 1px solid rgba(45, 212, 191, 0.45);
+      padding: 8px 14px; border-radius: 12px; pointer-events: auto;
+    }
+    .title-box h1 { font-size: 15px; font-weight: 700; color: #2dd4bf; letter-spacing: 0.3px; }
+    .title-box p { font-size: 11px; color: #cbd5e1; margin-top: 2px; }
+    .info-btn {
+      background: rgba(45, 212, 191, 0.2); border: 1px solid #2dd4bf;
+      color: #ccfbf1; padding: 8px 12px; border-radius: 10px;
+      font-size: 12px; font-weight: 600; cursor: pointer; pointer-events: auto;
+    }
+    .legend {
+      position: fixed; top: 72px; left: 12px;
+      background: rgba(15, 23, 42, 0.78); backdrop-filter: blur(6px);
+      border: 1px solid rgba(148, 163, 184, 0.25); border-radius: 10px;
+      padding: 7px 11px; font-size: 11px; color: #e2e8f0; z-index: 10;
+      pointer-events: none; display: flex; flex-direction: column; gap: 4px;
+    }
+    .legend-item { display: flex; align-items: center; gap: 6px; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+    .dot-solv { background: #38bdf8; }
+    .dot-solu { background: #f43f5e; }
+    .dot-spm { background: #fbbf24; border-radius: 2px; }
+    .status-badge {
+      margin-top: 3px; padding-top: 4px;
+      border-top: 1px solid rgba(148, 163, 184, 0.2);
+      font-size: 10.5px; color: #2dd4bf; font-weight: 600;
+    }
+    .info-panel {
+      position: fixed; top: 72px; right: 12px; width: 285px;
+      max-width: calc(100vw - 24px); background: rgba(15, 23, 42, 0.94);
+      backdrop-filter: blur(10px); border: 1px solid rgba(45, 212, 191, 0.45);
+      border-radius: 14px; padding: 12px 14px; z-index: 15; display: none;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    }
+    .info-panel.show { display: block; }
+    .info-panel h2 {
+      font-size: 13px; color: #2dd4bf; margin-bottom: 8px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.25); padding-bottom: 5px;
+    }
+    .info-panel ul { list-style: none; font-size: 11.8px; line-height: 1.65; color: #e2e8f0; }
+    .info-panel li strong { color: #fbbf24; }
+    .controls {
+      position: fixed; bottom: 42px; left: 50%; transform: translateX(-50%);
+      display: flex; gap: 7px; background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(8px); border: 1px solid rgba(148, 163, 184, 0.25);
+      padding: 8px 10px; border-radius: 14px; z-index: 10;
+      flex-wrap: nowrap; max-width: calc(100vw - 16px); overflow-x: auto;
+    }
+    .btn {
+      background: #1e293b; color: #e2e8f0; border: 1px solid #334155;
+      padding: 7px 11px; border-radius: 9px; font-size: 12px;
+      font-weight: 600; white-space: nowrap; cursor: pointer; transition: 0.2s;
+    }
+    .btn.active { background: #0d9488; border-color: #2dd4bf; color: #ffffff; }
+    .watermark {
+      position: fixed; bottom: 10px; right: 12px; font-size: 11px; font-weight: 600;
+      color: rgba(226, 232, 240, 0.75); background: rgba(15, 23, 42, 0.65);
+      padding: 4px 10px; border-radius: 8px; border: 1px solid rgba(148, 163, 184, 0.2);
+      z-index: 10; pointer-events: none;
+    }
+    .watermark span { color: #2dd4bf; }
+    .hint {
+      position: fixed; bottom: 12px; left: 12px; font-size: 10px;
+      color: rgba(148, 163, 184, 0.8); z-index: 10; pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="top-bar">
+    <div class="title-box">
+      <h1 id="mainTitle">Osmosis Across SPM</h1>
+      <p>12th HSC • Ch 2: Solutions (3D Model)</p>
+    </div>
+    <button class="info-btn" onclick="toggleInfo()">ℹ️ Notes</button>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><span class="dot dot-solv"></span> Small Solvent (Passes SPM)</div>
+    <div class="legend-item"><span class="dot dot-solu"></span> Large Solute (Blocked)</div>
+    <div class="legend-item"><span class="dot dot-spm"></span> Semi-Permeable Membrane</div>
+    <div class="status-badge" id="statusText">Flow: Left (Pure) → Right (Solution)</div>
+  </div>
+
+  <div class="info-panel" id="infoPanel">
+    <h2>📌 Osmosis & SPM Key Points</h2>
+    <ul>
+      <li>• <strong>Osmosis:</strong> Spontaneous net flow of <strong>solvent molecules</strong> from pure solvent (or dilute solution) to concentrated solution through an SPM.</li>
+      <li>• <strong>SPM (Semi-Permeable Membrane):</strong> Allows only small solvent molecules to pass, blocking larger solute particles.</li>
+      <li>• <strong>Examples of SPM:</strong> Cellophane, parchment paper, copper ferrocyanide [Cu₂Fe(CN)₆].</li>
+      <li>• <strong>Result:</strong> Liquid level rises on the concentrated solution side.</li>
+    </ul>
+  </div>
+
+  <div id="canvas-container"></div>
+
+  <div class="controls">
+    <button class="btn active" id="btnStart" onclick="setFlow(true)">Osmosis Flow (ON)</button>
+    <button class="btn" id="btnReset" onclick="resetLevels()">Reset Levels</button>
+    <button class="btn active" id="btnRotate" onclick="toggleRotate()">Auto Rotate</button>
+  </div>
+
+  <div class="hint">👆 Drag to Rotate • Pinch to Zoom</div>
+  <div class="watermark">Created by <span>Kunal Ganeshakar</span> | Master Chemistry</div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+  <script>
+    const container = document.getElementById('canvas-container');
+    const scene = new THREE.Scene();
+
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.set(0, 2.2, 8.2);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    container.appendChild(renderer.domElement);
+
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.06;
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = 0.8;
+    controls.minDistance = 4.5;
+    controls.maxDistance = 14;
+
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.65);
+    scene.add(ambientLight);
+    const dirLight1 = new THREE.DirectionalLight(0xffffff, 0.9);
+    dirLight1.position.set(6, 8, 6);
+    scene.add(dirLight1);
+    const dirLight2 = new THREE.DirectionalLight(0x2dd4bf, 0.5);
+    dirLight2.position.set(-6, -4, -6);
+    scene.add(dirLight2);
+
+    const rootGroup = new THREE.Group();
+    scene.add(rootGroup);
+
+    // Rectangular 3D Tank: width = 5.0 (-2.5 to +2.5), height = 3.2 (-1.6 to +1.6), depth = 2.2
+    const W = 5.0, H = 3.2, D = 2.2;
+    const tankGeo = new THREE.BoxGeometry(W, H, D);
+    const tankLines = new THREE.LineSegments(
+      new THREE.EdgesGeometry(tankGeo),
+      new THREE.LineBasicMaterial({ color: 0x94a3b8, transparent: true, opacity: 0.5 })
+    );
+    rootGroup.add(tankLines);
+
+    // Semi-Permeable Membrane (SPM) in the center (x = 0)
+    const spmGeo = new THREE.PlaneGeometry(D, H, 8, 12);
+    const spmMesh = new THREE.Mesh(
+      spmGeo,
+      new THREE.MeshBasicMaterial({ color: 0xfbbf24, wireframe: true, transparent: true, opacity: 0.75, side: THREE.DoubleSide })
+    );
+    spmMesh.rotation.y = Math.PI / 2;
+    rootGroup.add(spmMesh);
+
+    // Left Liquid (Pure Solvent) & Right Liquid (Concentrated Solution)
+    const leftLiqMat = new THREE.MeshPhysicalMaterial({ color: 0x0ea5e9, transparent: true, opacity: 0.22, depthWrite: false });
+    const rightLiqMat = new THREE.MeshPhysicalMaterial({ color: 0x6366f1, transparent: true, opacity: 0.28, depthWrite: false });
+
+    const leftLiq = new THREE.Mesh(new THREE.BoxGeometry(W/2 - 0.05, 1.0, D - 0.05), leftLiqMat);
+    leftLiq.position.x = -W/4;
+    rootGroup.add(leftLiq);
+
+    const rightLiq = new THREE.Mesh(new THREE.BoxGeometry(W/2 - 0.05, 1.0, D - 0.05), rightLiqMat);
+    rightLiq.position.x = W/4;
+    rootGroup.add(rightLiq);
+
+    // Small Solvent Molecules (36 blue spheres - can cross x = 0)
+    const solvGeo = new THREE.SphereGeometry(0.095, 14, 14);
+    const solvMat = new THREE.MeshStandardMaterial({ color: 0x38bdf8, emissive: 0x0369a1, roughness: 0.25 });
+    const solvents = [];
+    for (let i = 0; i < 36; i++) {
+      const m = new THREE.Mesh(solvGeo, solvMat);
+      const startX = (i < 24) ? (-2.2 + Math.random() * 2.0) : (0.2 + Math.random() * 2.0);
+      m.position.set(startX, -1.3 + Math.random() * 1.6, (Math.random() - 0.5) * 1.8);
+      rootGroup.add(m);
+      solvents.push({
+        mesh: m,
+        vel: new THREE.Vector3(0.015 + Math.random() * 0.015, (Math.random()-0.5)*0.02, (Math.random()-0.5)*0.02)
+      });
+    }
+
+    // Large Solute Molecules (14 red spheres - strictly trapped on Right side, x > 0.22)
+    const soluGeo = new THREE.SphereGeometry(0.19, 18, 18);
+    const soluMat = new THREE.MeshStandardMaterial({ color: 0xf43f5e, emissive: 0x881337, roughness: 0.25 });
+    const solutes = [];
+    for (let i = 0; i < 14; i++) {
+      const m = new THREE.Mesh(soluGeo, soluMat);
+      m.position.set(0.35 + Math.random() * 1.9, -1.2 + Math.random() * 1.5, (Math.random() - 0.5) * 1.6);
+      rootGroup.add(m);
+      solutes.push({
+        mesh: m,
+        vel: new THREE.Vector3((Math.random()-0.5)*0.022, (Math.random()-0.5)*0.018, (Math.random()-0.5)*0.022)
+      });
+    }
+
+    let flowActive = true;
+    let leftH = 1.9;
+    let rightH = 1.9;
+
+    function setFlow(active) {
+      flowActive = active;
+      document.getElementById('btnStart').classList.toggle('active', flowActive);
+    }
+
+    function resetLevels() {
+      leftH = 1.9;
+      rightH = 1.9;
+      solvents.forEach((s, i) => {
+        s.mesh.position.x = (i < 24) ? (-2.2 + Math.random() * 2.0) : (0.2 + Math.random() * 2.0);
+      });
+      flowActive = true;
+      document.getElementById('btnStart').classList.add('active');
+    }
+
+    function toggleRotate() {
+      controls.autoRotate = !controls.autoRotate;
+      document.getElementById('btnRotate').classList.toggle('active', controls.autoRotate);
+    }
+
+    function toggleInfo() {
+      document.getElementById('infoPanel').classList.toggle('show');
+    }
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    function animate() {
+      requestAnimationFrame(animate);
+
+      if (flowActive && rightH < 2.65) {
+        leftH -= 0.0022;
+        rightH += 0.0022;
+      }
+
+      leftLiq.scale.y = leftH;
+      leftLiq.position.y = -H/2 + leftH/2;
+      rightLiq.scale.y = rightH;
+      rightLiq.position.y = -H/2 + rightH/2;
+
+      const leftTop = -H/2 + leftH - 0.15;
+      const rightTop = -H/2 + rightH - 0.15;
+
+      // Move Solvent Molecules (net drift left -> right across SPM)
+      solvents.forEach(s => {
+        const drift = flowActive ? 0.008 : 0;
+        s.mesh.position.x += s.vel.x * 0.5 + drift;
+        s.mesh.position.y += s.vel.y;
+        s.mesh.position.z += s.vel.z;
+
+        if (s.mesh.position.x > 2.35) {
+          s.mesh.position.x = -2.35; // Loop back to keep continuous visual flow
+        } else if (s.mesh.position.x < -2.35) {
+          s.mesh.position.x = -2.35;
+          s.vel.x = Math.abs(s.vel.x);
+        }
+
+        const maxTop = (s.mesh.position.x < 0) ? leftTop : rightTop;
+        if (s.mesh.position.y > maxTop) { s.mesh.position.y = maxTop; s.vel.y = -Math.abs(s.vel.y); }
+        if (s.mesh.position.y < -H/2 + 0.15) { s.mesh.position.y = -H/2 + 0.15; s.vel.y = Math.abs(s.vel.y); }
+        if (Math.abs(s.mesh.position.z) > D/2 - 0.15) s.vel.z *= -1;
+      });
+
+      // Move Solute Molecules (bounce off SPM at x = 0.22)
+      solutes.forEach(s => {
+        s.mesh.position.add(s.vel);
+        if (s.mesh.position.x < 0.22) { s.mesh.position.x = 0.22; s.vel.x = Math.abs(s.vel.x); }
+        if (s.mesh.position.x > 2.28) { s.mesh.position.x = 2.28; s.vel.x = -Math.abs(s.vel.x); }
+        if (s.mesh.position.y > rightTop - 0.1) { s.mesh.position.y = rightTop - 0.1; s.vel.y = -Math.abs(s.vel.y); }
+        if (s.mesh.position.y < -H/2 + 0.22) { s.mesh.position.y = -H/2 + 0.22; s.vel.y = Math.abs(s.vel.y); }
+        if (Math.abs(s.mesh.position.z) > D/2 - 0.22) s.vel.z *= -1;
+      });
+
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    animate();
+  </script>
+</body>
+</html>
